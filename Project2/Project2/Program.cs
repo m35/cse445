@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 
-namespace ecommerceBookExample
+namespace HotelBookingSystem
 {
-    public delegate void priceCutEvent(Int32 pr);
+    public delegate void priceCutEvent(Int32 price);
     public class Hotel
     {
         static Random roomPrice = new Random(); //Initialize the random price
