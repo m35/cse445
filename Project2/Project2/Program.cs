@@ -9,7 +9,8 @@ namespace HotelBookingSystem
     public delegate void priceCutEvent(Int32 price);
     public class Hotel
     {
-        static Random roomPrice = new Random(); //Initialize the random price
+        static Random roomPrice = new Random(); 
+        static Random season = new Random(); 
         public static event priceCutEvent promotionalEvent; //price cut event
         private static Int32 currentRoomPrice = 200;
 
@@ -32,14 +33,29 @@ namespace HotelBookingSystem
             currentRoomPrice = currentPrice;
         }
 
-        //Every 2 seconds release a new room price
+        //Every 2 seconds release a new room price based on the season
         public void HotelAdvertiseFunc()
         {
-            for (Int32 i = 0; i < 50; i++)
+            for (Int32 i = 0; i < 36; i++)
             {
                 Thread.Sleep(2000);
+                Int32 currentSeason = season.Next(1, 4);
                 Int32 newRoomPrice = roomPrice.Next(50, 300);
-                Console.WriteLine("-------------------------------------------------------------------New room price is {0}", newRoomPrice);
+                if (currentSeason == 1) //off season
+                {
+                    newRoomPrice = roomPrice.Next(50, 100);
+                    //Console.WriteLine("----------------Off Season--------------------------");
+                }
+                else if(currentSeason == 3) //busy season
+                {
+                    newRoomPrice = roomPrice.Next(50, 600);
+                    //Console.WriteLine("----------------Busy Season--------------------------");
+                }
+                 
+                
+                
+                
+                Console.WriteLine("-------------------------------------------------------------------New room price is ${0}", newRoomPrice);
                 Hotel.changePrice(newRoomPrice);
             }
         }
