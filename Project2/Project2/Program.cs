@@ -88,7 +88,8 @@ namespace HotelBookingSystem
 
     public class TravelAgency
     {
-        public void buyTheRooms()
+        static Random numberOfRooms = new Random();
+        public void getHotelRates()
         {
             Hotel randomHotel = new Hotel();
             for (Int32 i = 0; i < 10; i++)
@@ -102,7 +103,18 @@ namespace HotelBookingSystem
         //Buy the discount rooms here
         public void discountRooms(Int32 p)
         {
+            
             Console.WriteLine("Travel Agency{0} has rooms for sale for as low as ${1} each", Thread.CurrentThread.Name, p);
+            OrderObject purchaseOrder = new OrderObject();
+            purchaseOrder.amount = numberOfRooms.Next(0, 500);
+            purchaseOrder.unitPrice = p;
+            //Not sure on these variables source
+            purchaseOrder.senderID = Thread.CurrentThread.Name;
+            purchaseOrder.receiverID = Thread.CurrentThread.Name;
+            purchaseOrder.cardNo = 3;
+
+            Coder.Encode(purchaseOrder);
+            
         }
     }
 
@@ -124,7 +136,7 @@ namespace HotelBookingSystem
             Thread[] travelAgencies = new Thread[5];
             for (int i = 0; i < 5; i++)
             {
-                travelAgencies[i] = new Thread(new ThreadStart(randomTravelAgency.buyTheRooms));
+                travelAgencies[i] = new Thread(new ThreadStart(randomTravelAgency.getHotelRates));
                 travelAgencies[i].Name = (i + 1).ToString();
                 travelAgencies[i].Start();
             }
