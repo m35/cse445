@@ -20,7 +20,7 @@ namespace HotelBookingSystem
             return currentRoomPrice;
         }
 
-        //
+        
         public static void changePrice(Int32 currentPrice)
         {
             if (currentPrice < currentRoomPrice)
