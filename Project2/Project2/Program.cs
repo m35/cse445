@@ -42,7 +42,7 @@ namespace HotelBookingSystem
             {
                 Thread.Sleep(2000);
                 Int32 currentSeason = season.Next(1, 4);
-                Int32 newRoomPrice = roomPrice.Next(50, 300);
+                Int32 newRoomPrice = roomPrice.Next(50, 500);
                 if (currentSeason == 1) //off season
                 {
                     newRoomPrice = roomPrice.Next(50, 100);
@@ -50,7 +50,7 @@ namespace HotelBookingSystem
                 }
                 else if(currentSeason == 3) //busy season
                 {
-                    newRoomPrice = roomPrice.Next(50, 500);
+                    newRoomPrice = roomPrice.Next(300, 500);
                     //Console.WriteLine("----------------Busy Season--------------------------");
                 }
                 
