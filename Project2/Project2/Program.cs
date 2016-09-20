@@ -11,11 +11,13 @@ namespace HotelBookingSystem
     public class Hotel
     {
         static Random roomPrice = new Random(); 
-        static Random season = new Random(); 
+        static Random season = new Random();
+        static Random roomCount = new Random();
+
         public static event priceCutEvent promotionalEvent; //price cut event
         private static Int32 currentRoomPrice = 200;
 
-
+        //Return the room price.
         public Int32 getPrice()
         {
             return currentRoomPrice;
@@ -34,7 +36,7 @@ namespace HotelBookingSystem
             currentRoomPrice = currentPrice;
         }
 
-        //Every 2 seconds release a new room price based on the season
+        //PRICING MODEL
         public void HotelAdvertiseFunc()
         {
             // Has to take in some sort of variable SH
@@ -42,17 +44,41 @@ namespace HotelBookingSystem
             {
                 Thread.Sleep(2000);
                 Int32 currentSeason = season.Next(1, 4);
+                Int32 roomsAvailable = roomCount.Next(1, 500);
                 Int32 newRoomPrice = roomPrice.Next(50, 500);
                 if (currentSeason == 1) //off season
                 {
-                    newRoomPrice = roomPrice.Next(50, 100);
-                    //Console.WriteLine("----------------Off Season--------------------------");
+                    if (roomsAvailable > 250)
+                    {
+                        newRoomPrice = roomPrice.Next(50, 150);
+                    }
+                    else if (roomsAvailable < 250 && roomsAvailable > 50)
+                    {
+                        newRoomPrice = roomPrice.Next(150, 250);
+                    }
+                    else
+                    {
+                        newRoomPrice = roomPrice.Next(250, 500);
+                    }
+                    
                 }
                 else if(currentSeason == 3) //busy season
                 {
-                    newRoomPrice = roomPrice.Next(300, 500);
-                    //Console.WriteLine("----------------Busy Season--------------------------");
+                    if (roomsAvailable > 250)
+                    {
+                        newRoomPrice = roomPrice.Next(200, 300);
+                    }
+                    else if (roomsAvailable < 250 && roomsAvailable > 50)
+                    {
+                        newRoomPrice = roomPrice.Next(300, 400);
+                    }
+                    else
+                    {
+                        newRoomPrice = roomPrice.Next(400, 500);
+                    }
+
                 }
+
                 
                 Console.WriteLine("-------------------------------------------------------------------New room price is ${0}", newRoomPrice);
                 Hotel.changePrice(newRoomPrice);
@@ -73,7 +99,7 @@ namespace HotelBookingSystem
             }
         }
 
-
+        //Buy the discount rooms here
         public void discountRooms(Int32 p)
         {
             Console.WriteLine("Travel Agency{0} has rooms for sale for as low as ${1} each", Thread.CurrentThread.Name, p);
@@ -85,7 +111,7 @@ namespace HotelBookingSystem
         static void Main(string[] args)
         {
             Hotel randomHotel = new Hotel();
-            Thread[] hotels = new Thread[3];//
+            Thread[] hotels = new Thread[3];
             for (int i = 0; i < 3; i++)
             {
                 hotels[i] = new Thread(new ThreadStart(randomHotel.HotelAdvertiseFunc));
