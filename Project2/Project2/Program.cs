@@ -215,6 +215,7 @@ namespace HotelBookingSystem
             }
             finally
             {
+                --cellsInUse;
                 if (cellsInUse > 2)
                     cellsInUse = 2;
                 else if (cellsInUse < 0)
