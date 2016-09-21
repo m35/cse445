@@ -186,7 +186,6 @@ namespace HotelBookingSystem
                             return tmp;
                         }
                     }
-
                 }
             }
             finally
@@ -227,6 +226,20 @@ namespace HotelBookingSystem
             _pool.Release();
             return 1;
         }
+    }
+
+    // Bank service; holds the amounts in the bank account and decrypts credit card no's
+    public class BankService
+    {
+        private int[] accountAmount;
+
+        public string chargeAccount(string cardNo, int amount)
+        {
+            
+
+            return "valid";
+        }
+
     }
 
     // Encoder/decoder. Handle non-orders in hotel or travel agent
