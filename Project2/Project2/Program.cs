@@ -143,8 +143,8 @@ namespace HotelBookingSystem
         }
     }
 
+
     // Multi String Buffer
-    // SH 9/18: It's garbage but I wrote it
     //      Fix it if you know it!
 
     // Need semaphore/write/read for travel agent access
@@ -156,7 +156,7 @@ namespace HotelBookingSystem
         private Semaphore _pool;
         private ReaderWriterLock rwLock = new ReaderWriterLock();
 
-        public MultiCellBuffer ()
+        public MultiCellBuffer()
         {
             cell = new string[3];
             _pool = new Semaphore(3, 3);
@@ -179,22 +179,52 @@ namespace HotelBookingSystem
                     for (int i = 0; i < 3; ++i)
                     {
                         string toChk = cell[i].Split(',')[0];
-                        if(String.Compare(name,toChk) == 0)
+                        if (String.Compare(name, toChk) == 0)
                         {
                             string tmp = cell[i];
                             cell[i] = "";
                             return tmp;
                         }
                     }
-                    
+
                 }
-            }finally
+            }
+            finally
             {
                 rwLock.ReleaseReaderLock();
             }
 
             return "cbl";  // come back later
             //_pool.Release();
+        }
+
+        // Travel agent posting orders
+        public int setCell(string order)
+        {
+            _pool.WaitOne();
+            rwLock.AcquireWriterLock(Timeout.Infinite); // not sure what the timeout should be, may be a deadlock
+            try
+            {
+                // Check each cell for price
+                if (checkEmpty()) { }
+                else
+                {
+                    cell[cellsInUse] = order;
+                    ++cellsInUse;
+                }
+            }
+            finally
+            {
+                if (cellsInUse > 2)
+                    cellsInUse = 2;
+                else if (cellsInUse < 0)
+                    cellsInUse = 0;
+
+                rwLock.ReleaseWriterLock();
+            }
+
+            _pool.Release();
+            return 1;
         }
     }
 
