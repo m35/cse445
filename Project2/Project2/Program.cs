@@ -10,12 +10,12 @@ namespace HotelBookingSystem
 
     public class Hotel
     {
-        static Random roomPrice = new Random(); 
-        static Random season = new Random();
-        static Random roomCount = new Random();
+        Random roomPrice = new Random(); 
+        Random season = new Random();
+        Random roomCount = new Random();
 
-        public static event priceCutEvent promotionalEvent; //price cut event
-        private static Int32 currentRoomPrice = 200;
+        public event priceCutEvent promotionalEvent; //price cut event
+        private Int32 currentRoomPrice = 200;
 
         /// <returns>Return the current room price (subject to change without notice, terms and conditions may apply).</returns>
         public Int32 getPrice()
@@ -27,7 +27,7 @@ namespace HotelBookingSystem
         /// <summary>
         /// Changes the price and notifies all listeners (in our case TravelAgencies).
         /// </summary>
-        public static void changePrice(Int32 currentPrice)
+        public void changePrice(Int32 currentPrice)
         {
             if (currentPrice < currentRoomPrice)
             {
@@ -153,14 +153,14 @@ namespace HotelBookingSystem
                 // Has to take in some sort of variable SH
                 Int32 newRoomPrice = pricingModel(); // "the function must take the amount of orders as input"
                 Console.WriteLine("-------------------------------------------------------------------New room price is ${0}", newRoomPrice);
-                Hotel.changePrice(newRoomPrice);
+                changePrice(newRoomPrice);
             }
         }
     }
 
     public class TravelAgency
     {
-        static Random numberOfRooms = new Random();
+        Random numberOfRooms = new Random();
         /// <summary>Entry point for TravelAgency thread.</summary>
         /// <remarks>
         /// The thread will terminate after the Hotel thread has terminated.
@@ -212,27 +212,31 @@ namespace HotelBookingSystem
         */
     }
 
-    public class myApplication
+    public class MainProgram
     {
         static void Main(string[] args)
         {
-            Hotel randomHotel = new Hotel();
-            Thread[] hotels = new Thread[3];
+            Hotel[] hotels = new Hotel[3];
+            Thread[] hotelThreads = new Thread[3];
             for (int i = 0; i < 3; i++)
             {
-                hotels[i] = new Thread(new ThreadStart(randomHotel.HotelAdvertiseFunc));
-                hotels[i].Name = (i + 1).ToString();
-                hotels[i].Start();
+                hotels[i] = new Hotel();
+                hotelThreads[i] = new Thread(new ThreadStart(hotels[i].HotelAdvertiseFunc));
+                hotelThreads[i].Name = String.Format("Hotel {0} thread", i + 1);
+                hotelThreads[i].Start();
             }
 
-            TravelAgency randomTravelAgency = new TravelAgency();
-            Hotel.promotionalEvent += new priceCutEvent(randomTravelAgency.discountRooms);
-            Thread[] travelAgencies = new Thread[5];
+            Thread[] travelAgencyThreads = new Thread[5];
             for (int i = 0; i < 5; i++)
             {
-                travelAgencies[i] = new Thread(new ThreadStart(randomTravelAgency.getHotelRates));
-                travelAgencies[i].Name = (i + 1).ToString();
-                travelAgencies[i].Start();
+                TravelAgency aTravelAgency = new TravelAgency();
+                for (int j = 0; j < hotels.Length; i++)
+                {
+                    hotels[j].promotionalEvent += new priceCutEvent(aTravelAgency.discountRooms);
+                }
+                travelAgencyThreads[i] = new Thread(new ThreadStart(aTravelAgency.getHotelRates));
+                travelAgencyThreads[i].Name = (i + 1).ToString();
+                travelAgencyThreads[i].Start();
             }
         }
     }
