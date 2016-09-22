@@ -17,13 +17,16 @@ namespace HotelBookingSystem
         public static event priceCutEvent promotionalEvent; //price cut event
         private static Int32 currentRoomPrice = 200;
 
-        //Return the room price.
+        /// <returns>Return the current room price (subject to change without notice, terms and conditions may apply).</returns>
         public Int32 getPrice()
         {
             return currentRoomPrice;
         }
 
         
+        /// <summary>
+        /// Changes the price and notifies all listeners (in our case TravelAgencies).
+        /// </summary>
         public static void changePrice(Int32 currentPrice)
         {
             if (currentPrice < currentRoomPrice)
@@ -37,6 +40,7 @@ namespace HotelBookingSystem
         }
 
         //PRICING MODEL
+        /// <summary>Entry point for Hotel thread.</summary>
         public void HotelAdvertiseFunc()
         {
             // Has to take in some sort of variable SH
@@ -89,6 +93,10 @@ namespace HotelBookingSystem
     public class TravelAgency
     {
         static Random numberOfRooms = new Random();
+        /// <summary>Entry point for TravelAgency thread.</summary>
+        /// <remarks>
+        /// The thread will terminate after the Hotel thread has terminated.
+        /// </remarks>
         public void getHotelRates()
         {
             Hotel randomHotel = new Hotel();
@@ -100,7 +108,16 @@ namespace HotelBookingSystem
             }
         }
 
-        //Buy the discount rooms here
+        /// <summary>Buy the discount rooms here</summary>
+        /// <remarks>
+        /// Called by Hotel when a price cut occurs.
+        /// 
+        /// Each travel agency contains a call-back method (event handler) for the Hotel to call when
+        /// a price-cut event occurs.
+        ///
+        /// The travel agency will calculate the number of rooms to order, for example, based on the
+        /// need and the difference between the previous price and the current price.
+        /// </remarks>
         public void discountRooms(Int32 p)
         {
             
@@ -116,6 +133,15 @@ namespace HotelBookingSystem
             Coder.Encode(purchaseOrder);
             
         }
+
+        /* Not sure where this is supposed to happen
+        Each order is an OrderClass object. 
+        The object is sent to the Encoder for encoding. 
+        The encoded string is sent back to the travel agency. 
+        Then, the travel agency will send the order in string format to the MultiCellBuffer. 
+        Before sending the order to the MultiCellBuffer, a time stamp must be saved. 
+        When the confirmation of order completion is received, the time of the order will be calculated and saved or printed.
+        */
     }
 
     public class myApplication
@@ -201,7 +227,9 @@ namespace HotelBookingSystem
         public int setCell(string order)
         {
             _pool.WaitOne();
-            rwLock.AcquireWriterLock(Timeout.Infinite); // not sure what the timeout should be, may be a deadlock
+            // wait forever until other threads are done with their work 
+            // (should never deadlock unless another thread never leaves)
+            rwLock.AcquireWriterLock(Timeout.Infinite); 
             try
             {
                 // Check each cell for price
