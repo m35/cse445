@@ -39,51 +39,119 @@ namespace HotelBookingSystem
             currentRoomPrice = currentPrice;
         }
 
-        //PRICING MODEL
+        public void receiveOrder(string encodedOrder)
+        {
+            OrderObject order = Coder.Decode(encodedOrder);
+
+        }
+
+        /// <summary>
+        /// OrderProcessing
+        /// </summary>
+        /// <remarks>
+        /// A class or a method in a class on the server's side.
+        ///
+        /// Whenever an order needs to be processed, a new thread is instantiated from this method to
+        /// process the order. 
+        /// 
+        /// It will check the validity of the credit card number.
+        ///
+        /// For one/two-member group, you can define your credit card format (example, the credit
+        /// card number from the travel agencies must be a number registered to the Hotel, or a
+        /// number between two given numbers like 5000 and 7000).
+        ///
+        /// For the three-member group project, a bank service must be created. Each OrderProcessing
+        /// thread will calculate the total amount of charge (e.g., unitPrice*NoOfRooms + Tax + LocationCharge).
+        ///
+        /// A confirmation must be sent back to the TravelAgency when an order is completed.
+        ///
+        /// You can implement the confirmation in different ways. For example, you can use another
+        /// buffer for the confirmation, where you can use a buffer cell for each thread, so that you
+        /// do not have to consider the conflict among the threads. However, you still need to
+        /// coordinate the write and read between the producer and the consumer.
+        /// </remarks>
+        private void orderProcessing()
+        {
+            Thread processingThread; // = new Thread(?);
+            // ... I don't understand what to do next.
+            
+        }
+
+        /// <summary>PricingModel</summary>
+        /// <remarks>
+        /// It can be a class or a method in the Hotel class.
+        /// 
+        /// It decides the price of rooms, which must be between 50 and 500.
+        /// It can increase or decrease the price.
+        ///
+        /// Must be a complex mathematical model where the price must be a function with
+        /// multiple parameters (such as the number of orders received within a given time period and
+        /// the number of rooms available in the Hotel in the same time period).
+        ///
+        /// In other words, the function must take the amount of orders as input.
+        ///
+        /// May use a hard-coded table of the price in each weekday.
+        ///
+        /// The model must allow the price to go up some times and go down
+        /// other times within your iterations of testing.
+        /// </remarks>
+        /// <returns>The new price for a room.</returns>
+        private Int32 pricingModel() // "the function must take the amount of orders as input"
+        {
+            Int32 newRoomPrice;
+            Int32 currentSeason = season.Next(1, 4);
+            Int32 roomsAvailable = roomCount.Next(1, 500);
+            if (currentSeason == 1) //off season
+            {
+                if (roomsAvailable > 250)
+                {
+                    newRoomPrice = roomPrice.Next(50, 150);
+                }
+                else if (roomsAvailable < 250 && roomsAvailable > 50)
+                {
+                    newRoomPrice = roomPrice.Next(150, 250);
+                }
+                else
+                {
+                    newRoomPrice = roomPrice.Next(250, 500);
+                }
+
+            }
+            else if (currentSeason == 3) //busy season
+            {
+                if (roomsAvailable > 250)
+                {
+                    newRoomPrice = roomPrice.Next(200, 300);
+                }
+                else if (roomsAvailable < 250 && roomsAvailable > 50)
+                {
+                    newRoomPrice = roomPrice.Next(300, 400);
+                }
+                else
+                {
+                    newRoomPrice = roomPrice.Next(400, 500);
+                }
+
+            }
+            else
+            {
+                newRoomPrice = roomPrice.Next(50, 500);
+            }
+
+            return newRoomPrice;
+        }
+
         /// <summary>Entry point for Hotel thread.</summary>
         public void HotelAdvertiseFunc()
         {
-            // Has to take in some sort of variable SH
-            for (Int32 i = 0; i < 36; i++)
+            const Int32 PRICE_CHANGES_UNTIL_EXIT = 36;
+
+            for (Int32 i = 0; i < PRICE_CHANGES_UNTIL_EXIT; i++)
             {
                 Thread.Sleep(2000);
-                Int32 currentSeason = season.Next(1, 4);
-                Int32 roomsAvailable = roomCount.Next(1, 500);
-                Int32 newRoomPrice = roomPrice.Next(50, 500);
-                if (currentSeason == 1) //off season
-                {
-                    if (roomsAvailable > 250)
-                    {
-                        newRoomPrice = roomPrice.Next(50, 150);
-                    }
-                    else if (roomsAvailable < 250 && roomsAvailable > 50)
-                    {
-                        newRoomPrice = roomPrice.Next(150, 250);
-                    }
-                    else
-                    {
-                        newRoomPrice = roomPrice.Next(250, 500);
-                    }
-                    
-                }
-                else if(currentSeason == 3) //busy season
-                {
-                    if (roomsAvailable > 250)
-                    {
-                        newRoomPrice = roomPrice.Next(200, 300);
-                    }
-                    else if (roomsAvailable < 250 && roomsAvailable > 50)
-                    {
-                        newRoomPrice = roomPrice.Next(300, 400);
-                    }
-                    else
-                    {
-                        newRoomPrice = roomPrice.Next(400, 500);
-                    }
 
-                }
-
-                
+                // Has to take in some sort of variable SH
+                Int32 newRoomPrice = pricingModel(); // "the function must take the amount of orders as input"
                 Console.WriteLine("-------------------------------------------------------------------New room price is ${0}", newRoomPrice);
                 Hotel.changePrice(newRoomPrice);
             }
