@@ -232,14 +232,60 @@ namespace HotelBookingSystem
     public class BankService
     {
         private int[] accountAmount;
+        private int[] cardNumber;
 
-        public string chargeAccount(string cardNo, int amount)
+        public BankService()
         {
-            
-
-            return "valid";
+            accountAmount = new int[5];
+            cardNumber = new int[5];
         }
 
+        public string chargeAccount(string cardNo, int amount) // card is encrypted
+        {
+            Project2.EncryptSvc.ServiceClient client = new Project2.EncryptSvc.ServiceClient();
+            int cnum = Convert.ToInt32(client.Decrypt(cardNo));
+
+            for(int i = 0; i < 5; ++i)
+            {
+                if(cnum == cardNumber[i] &&
+                    amount < accountAmount[i])
+                {
+                    accountAmount[i] -= amount;
+                    return "valid";
+                }
+            }
+            return "not valid";
+        }
+
+        public int cardApplication(int amount) // outs the card num
+        {
+            int i = 0;
+            while (cardNumber[i] == 0)
+                ++i;
+
+            Random rand = new Random();
+            int temp = (i + 1) * 1000 + rand.Next(0, 999);
+
+            cardNumber[i] = temp;
+            accountAmount[i] = amount;
+
+            return cardNumber[i];
+        }
+
+        // just part of the required parts of bank
+        public int deposit(int cardNo, int amount) // Don't have to use
+        {
+            for (int i = 0; i < 5; ++i)
+            {
+                if (cardNo == cardNumber[i])
+                {
+                    accountAmount[i] += amount;
+                    return 0; // success
+                }
+            }
+
+            return -1; // card not found
+        }
     }
 
     // Encoder/decoder. Handle non-orders in hotel or travel agent
@@ -252,7 +298,8 @@ namespace HotelBookingSystem
                 obj.cardNo + ',' +
                 obj.senderID + ',' +
                 obj.amount + ',' +
-                obj.unitPrice;
+                obj.unitPrice + ',' +
+                obj.timestamp;
 
             return str;
         }
@@ -268,6 +315,7 @@ namespace HotelBookingSystem
             obj.senderID = words[2];
             obj.amount = Convert.ToInt32(words[3]);
             obj.unitPrice = Convert.ToDouble(words[4]);
+            obj.timestamp = Convert.ToInt32(words[5]);
 
             return obj;
         }
@@ -280,5 +328,6 @@ namespace HotelBookingSystem
         public string receiverID { get; set; }
         public int amount { get; set; }
         public double unitPrice { get; set; }
+        public int timestamp { get; set; }
     }
 }
