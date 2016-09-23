@@ -167,6 +167,7 @@ namespace HotelBookingSystem
     public class TravelAgency
     {
         static Random numberOfRooms = new Random();
+        Int32 previousPrice = 0;
         /// <summary>Entry point for TravelAgency thread.</summary>
         /// <remarks>
         /// The thread will terminate after the Hotel thread has terminated.
@@ -178,6 +179,7 @@ namespace HotelBookingSystem
             {
                 Thread.Sleep(1000);
                 Int32 roomPrice = randomHotel.getPrice();
+                previousPrice = roomPrice; 
                 Console.WriteLine("Travel Agency{0} has everyday low price: ${1} per room", Thread.CurrentThread.Name, roomPrice);
             }
         }
@@ -194,6 +196,7 @@ namespace HotelBookingSystem
         /// </remarks>
         public void discountRooms(Int32 p)
         {
+            Int32 demand = howManyRoomsToOrder(p, previousPrice);
             BankService newBank = new BankService();
             Int32 creditApplicationAmount = 200000;
             string encodedString = "";
@@ -213,6 +216,33 @@ namespace HotelBookingSystem
             encodedString = Coder.Encode(purchaseOrder);
             
             
+        }
+
+        //Finds a number of rooms to order based on a random demand and the price differences.
+        private int howManyRoomsToOrder(Int32 newPrice, Int32 oldPrice)
+        {
+            Int32 numberOfRooms = 0;
+            Int32 priceDif = oldPrice - newPrice;
+            Random demand = new Random();
+            Int32 currentDemand = demand.Next(0, 10);
+            if (priceDif > 400)
+            {
+                numberOfRooms = 4;
+            }
+            else if (priceDif > 200 && priceDif < 400)
+            {
+                numberOfRooms = 3;
+            }
+            else if (priceDif > 100 && priceDif < 200)
+            {
+                numberOfRooms = 2;
+            }
+            else
+            {
+                numberOfRooms = 1;
+            }
+            numberOfRooms = numberOfRooms * currentDemand;
+            return numberOfRooms;
         }
 
         /* Not sure where this is supposed to happen
