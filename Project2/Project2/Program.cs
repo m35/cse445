@@ -1,5 +1,4 @@
-﻿using HotelBookingSystem;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,14 +7,18 @@ using System.Threading;
 namespace HotelBookingSystem
 {
     public delegate void priceCutEvent(Int32 price);
-
+    
+    //Hotel Requirements:
+    //  Use pricing model to determine room prices (complete)
+    //  Define a price cut event and call event handlers in Travel Agency(complete)
+    //  Receives orders (strings) (complete)
+    //  Decodes the string (complete)
+    //  Process the order
     public class Hotel
     {
         static Random roomPrice = new Random(); 
         static Random season = new Random();
         static Random roomCount = new Random();
-        static double tax = .08;
-        static double locCharge = 10;
 
         public static event priceCutEvent promotionalEvent; //price cut event
         private static Int32 currentRoomPrice = 200;
@@ -42,11 +45,10 @@ namespace HotelBookingSystem
             currentRoomPrice = currentPrice;
         }
 
-        
         public void receiveOrder(string encodedOrder)
         {
             OrderObject order = Coder.Decode(encodedOrder);
-
+            orderProcessing();
         }
 
         /// <summary>
@@ -74,14 +76,11 @@ namespace HotelBookingSystem
         /// do not have to consider the conflict among the threads. However, you still need to
         /// coordinate the write and read between the producer and the consumer.
         /// </remarks>
-        private void orderProcessing(OrderObject obj, BankService bank, ConfirmBuffer buf)
+        private void orderProcessing()
         {
-            string validation, result;
-            double toCharge = (obj.unitPrice * Convert.ToDouble(obj.amount)) * (1.0 + tax) + locCharge;
-            Project2.EncryptSvc.ServiceClient client = new Project2.EncryptSvc.ServiceClient();
-
-            validation = bank.chargeAccount(client.Encrypt(Convert.ToString(obj.cardNo)), toCharge);
-            result = "Order for Agency " + obj.senderID + " started at " + obj.timestamp +", "
+            Thread processingThread; // = new Thread(?);
+            // ... I don't understand what to do next.
+            
         }
 
         /// <summary>PricingModel</summary>
@@ -156,27 +155,12 @@ namespace HotelBookingSystem
             for (Int32 i = 0; i < PRICE_CHANGES_UNTIL_EXIT; i++)
             {
                 Thread.Sleep(2000);
-                
+
+                // Has to take in some sort of variable SH
                 Int32 newRoomPrice = pricingModel(); // "the function must take the amount of orders as input"
                 Console.WriteLine("-------------------------------------------------------------------New room price is ${0}", newRoomPrice);
                 Hotel.changePrice(newRoomPrice);
             }
-        }
-    }
-
-    public class ConfirmBuffer
-    {
-        private object[] cbuf;
-
-        public ConfirmBuffer()
-        {
-            cbuf = new object[5];
-        }
-
-        //Needs to evaluate which threads buffer (senderID), (timestamp and validation msg)
-        public void confirm(string id, string msg)
-        {
-
         }
     }
 
@@ -210,17 +194,24 @@ namespace HotelBookingSystem
         /// </remarks>
         public void discountRooms(Int32 p)
         {
-            
+            BankService newBank = new BankService();
+            Int32 creditApplicationAmount = 200000;
+            string encodedString = "";
+
             Console.WriteLine("Travel Agency{0} has rooms for sale for as low as ${1} each", Thread.CurrentThread.Name, p);
             OrderObject purchaseOrder = new OrderObject();
             purchaseOrder.amount = numberOfRooms.Next(0, 500);
             purchaseOrder.unitPrice = p;
-            //Not sure on these variables source
+            //Not sure if the sender and reciever IDs are the same thread an how to pull different thread IDs
             purchaseOrder.senderID = Thread.CurrentThread.Name;
             purchaseOrder.receiverID = Thread.CurrentThread.Name;
-            purchaseOrder.cardNo = 3;
 
-            Coder.Encode(purchaseOrder);
+            //Applying for the new card as soon rooms are a good price.
+            purchaseOrder.cardNo = newBank.cardApplication(creditApplicationAmount);
+
+            //Sends this orderObject to be encoded
+            encodedString = Coder.Encode(purchaseOrder);
+            
             
         }
 
@@ -268,29 +259,28 @@ namespace HotelBookingSystem
     public class MultiCellBuffer
     {
         private string[] cell;
-        private Int32 cellsInUse = 0;
+        private int cellsInUse = 0;
         private Semaphore _pool;
-        private ReaderWriterLock rwLock;
+        private ReaderWriterLock rwLock = new ReaderWriterLock();
 
         public MultiCellBuffer()
         {
             cell = new string[3];
             _pool = new Semaphore(3, 3);
-            rwLock = new ReaderWriterLock();
         }
 
-        public bool checkFull() { return (cellsInUse >= 3); } // true if there's no free cell
+        public bool checkOpen() { return (cellsInUse < 3); } // true if there's a free cell
         public bool checkEmpty() { return (cellsInUse == 0); } // true if there's nothin there
 
         // Hotel checking the orders
         public string getCell(string name)
         {
-            string ret = "cbl";  // come back later
-            rwLock.AcquireReaderLock(100);
+            rwLock.AcquireReaderLock(Timeout.Infinite);
             try
             {
+                //_pool.WaitOne();
                 // Check each cell for price
-                if (checkEmpty()) { } // if it's empty, try again in a bit
+                if (checkEmpty()) { }
                 else
                 {
                     for (int i = 0; i < 3; ++i)
@@ -300,23 +290,18 @@ namespace HotelBookingSystem
                         {
                             string tmp = cell[i];
                             cell[i] = "";
-                            --cellsInUse;
-                            ret = tmp;
+                            return tmp;
                         }
                     }
                 }
             }
             finally
             {
-                if (cellsInUse > 3)
-                    cellsInUse = 3;
-                else if (cellsInUse < 0)
-                    cellsInUse = 0;
-
                 rwLock.ReleaseReaderLock();
             }
 
-            return ret; 
+            return "cbl";  // come back later
+            //_pool.Release();
         }
 
         // Travel agent posting orders
@@ -329,22 +314,25 @@ namespace HotelBookingSystem
             try
             {
                 // Check each cell for price
-                if(checkFull())
-                    return 0;  // if it's full
-
-                ++cellsInUse;
-                cell[cellsInUse-1] = order;
+                if (checkEmpty()) { }
+                else
+                {
+                    cell[cellsInUse] = order;
+                    ++cellsInUse;
+                }
             }
             finally
             {
-                if (cellsInUse > 3)
-                    cellsInUse = 3;
+                --cellsInUse;
+                if (cellsInUse > 2)
+                    cellsInUse = 2;
                 else if (cellsInUse < 0)
                     cellsInUse = 0;
 
                 rwLock.ReleaseWriterLock();
-                _pool.Release();
             }
+
+            _pool.Release();
             return 1;
         }
     }
@@ -352,43 +340,35 @@ namespace HotelBookingSystem
     // Bank service; holds the amounts in the bank account and decrypts credit card no's
     public class BankService
     {
-        private double[] accountAmount;
+        private int[] accountAmount;
         private int[] cardNumber;
-        private object[] lck;
 
         public BankService()
         {
-            accountAmount = new double[5];
-            cardNumber = new int[5];
-            lck = new object[5];
+            accountAmount = new int[5] {0,0,0,0,0};
+            cardNumber = new int[5] {-1,-1,-1,-1,-1};
         }
 
-        public string chargeAccount(string cardNo, double amount) // card is encrypted
+        public string chargeAccount(string cardNo, int amount) // card is encrypted
         {
             Project2.EncryptSvc.ServiceClient client = new Project2.EncryptSvc.ServiceClient();
             int cnum = Convert.ToInt32(client.Decrypt(cardNo));
 
-            int j = 0;
-            while (j < 5 && ( cnum != cardNumber[j]))
-                ++j;
-
-            if(j > 5)
+            for(int i = 0; i < 5; ++i)
             {
-                return "invalid";
-            }
-            lock (lck[j])
-            {
-                if (amount < accountAmount[j])
+                if(cnum == cardNumber[i] &&
+                    amount < accountAmount[i])
                 {
-                    accountAmount[j] -= amount;
+                    accountAmount[i] -= amount;
+                    return "valid";
                 }
             }
-            
-            return "valid";
+            return "not valid";
         }
 
         public int cardApplication(int amount) // outs the card num
         {
+            //Console.WriteLine("Bank application");
             int i = 0;
             while (cardNumber[i] == 0)
                 ++i;
@@ -419,8 +399,7 @@ namespace HotelBookingSystem
     }
 
     // Encoder/decoder. Handle non-orders in hotel or travel agent
-    // entries seperated by ',' 
-    // Had to add timestamp, too.
+    // entries seperated by ','
     public static class Coder
     {
         public static string Encode(OrderObject obj)
@@ -454,11 +433,11 @@ namespace HotelBookingSystem
     
     public class OrderObject // receiverID is first just fyi
     {
-        public string senderID { get; set; } // Agency thread ID
-        public Int32 cardNo { get; set; } // Cardnum to check with bank
-        public string receiverID { get; set; } // The hotel thread ID
-        public Int32 amount { get; set; } // Num of rooms
-        public double unitPrice { get; set; } // Cost of the room
-        public Int32 timestamp { get; set; } // The time that the order left the agency
+        public string senderID { get; set; }
+        public int cardNo { get; set; }
+        public string receiverID { get; set; }
+        public int amount { get; set; }
+        public double unitPrice { get; set; }
+        public int timestamp { get; set; }
     }
 }
