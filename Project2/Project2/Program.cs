@@ -26,11 +26,10 @@ namespace HotelBookingSystem
         private static Int32 currentRoomPrice = 200;
 
         /// <returns>Return the current room price (subject to change without notice, terms and conditions may apply).</returns>
-        public Int32 getPrice()
+        public static Int32 getPrice()
         {
             return currentRoomPrice;
         }
-
         
         /// <summary>
         /// Changes the price and notifies all listeners (in our case TravelAgencies).
@@ -48,11 +47,16 @@ namespace HotelBookingSystem
         }
 
         
-        public void receiveOrder(string encodedOrder)
+        public void receiveOrder()
         {
-            OrderObject order = Coder.Decode(encodedOrder);
-            // This is different than the "order processing thread" so I'm going to comment
-            //orderProcessing();
+            // check if any orders are available
+            string encodedOrder = MultiCellBuffer.agency2hotel.getCell(Thread.CurrentThread.Name);
+            if (encodedOrder != "cbl") // magic "check back later" string
+            {
+                OrderObject order = Coder.Decode(encodedOrder);
+                // process the received order
+                orderProcessing(order);
+            }
         }
 
         /// <summary>
@@ -80,15 +84,15 @@ namespace HotelBookingSystem
         /// do not have to consider the conflict among the threads. However, you still need to
         /// coordinate the write and read between the producer and the consumer.
         /// </remarks>
-        private void orderProcessing(OrderObject obj, BankService bank, ConfirmBuffer buf)
+        private void orderProcessing(OrderObject obj)
         {
             string validation, result;
             double toCharge = (obj.unitPrice * Convert.ToDouble(obj.amount)) * (1.0 + tax) + locCharge;
             Project2.EncryptSvc.ServiceClient client = new Project2.EncryptSvc.ServiceClient();
 
-            validation = bank.chargeAccount(client.Encrypt(Convert.ToString(obj.cardNo)), toCharge);
+            validation = BankService.centralBank.chargeAccount(client.Encrypt(Convert.ToString(obj.cardNo)), toCharge);
             result = "Order for Agency " + obj.senderID + " started at " + obj.timestamp + ", completed " + DateTime.Now;
-            buf.confirm(obj.senderID, result); // stopping here for tonight SH
+            ConfirmBuffer.hotel2agency.confirm(obj.senderID, result);
         }
 
         /// <summary>PricingModel</summary>
@@ -167,16 +171,19 @@ namespace HotelBookingSystem
                 // Has to take in some sort of variable SH
                 Int32 newRoomPrice = pricingModel(); // "the function must take the amount of orders as input"
                 Console.WriteLine("-------------------------------------------------------------------New room price is ${0}", newRoomPrice);
-                Hotel.changePrice(newRoomPrice);
+                changePrice(newRoomPrice);
+                receiveOrder();
             }
         }
     }
 
     public class ConfirmBuffer
     {
+        public static ConfirmBuffer hotel2agency = new ConfirmBuffer();
+
         private object[] cbuf;
 
-        public ConfirmBuffer()
+        private ConfirmBuffer()
         {
             cbuf = new object[5];
         }
@@ -185,6 +192,13 @@ namespace HotelBookingSystem
         public void confirm(string id, string msg)
         {
             // Stopping here for tonight SH
+            throw new NotImplementedException();
+        }
+
+        public string getConfirmation()
+        {
+            // TODO: implement
+            throw new NotImplementedException();
         }
     }
 
@@ -198,14 +212,14 @@ namespace HotelBookingSystem
         /// </remarks>
         public void getHotelRates()
         {
-            Hotel randomHotel = new Hotel();
             for (Int32 i = 0; i < 10; i++)
             {
                 Thread.Sleep(1000);
-                Int32 roomPrice = randomHotel.getPrice();
-                previousPrice = roomPrice; 
-                Console.WriteLine("Travel Agency{0} has everyday low price: ${1} per room", Thread.CurrentThread.Name, roomPrice);
-            }
+                Int32 roomPrice = Hotel.getPrice();
+                previousPrice = roomPrice;
+                string confirmation = ConfirmBuffer.hotel2agency.getConfirmation();
+                Console.WriteLine("Travel Agency{0} has received confirmation", Thread.CurrentThread.Name, confirmation);
+            } // TODO: exit when Hotel threads are terminated
         }
 
         /// <summary>Buy the discount rooms here</summary>
@@ -221,7 +235,6 @@ namespace HotelBookingSystem
         public void discountRooms(Int32 p)
         {
             Int32 demand = howManyRoomsToOrder(p, previousPrice);
-            BankService newBank = new BankService();
             Int32 creditApplicationAmount = 200000;
             string encodedString = "";
 
@@ -234,12 +247,12 @@ namespace HotelBookingSystem
             purchaseOrder.receiverID = Thread.CurrentThread.Name;
 
             //Applying for the new card as soon rooms are a good price.
-            purchaseOrder.cardNo = newBank.cardApplication(creditApplicationAmount);
+            purchaseOrder.cardNo = BankService.centralBank.cardApplication(creditApplicationAmount);
 
             //Sends this orderObject to be encoded
             encodedString = Coder.Encode(purchaseOrder);
-            
-            
+
+            MultiCellBuffer.agency2hotel.setCell(encodedString);
         }
 
         //Finds a number of rooms to order based on a random demand and the price differences.
@@ -269,14 +282,6 @@ namespace HotelBookingSystem
             return numberOfRooms;
         }
 
-        /* Not sure where this is supposed to happen
-        Each order is an OrderClass object. 
-        The object is sent to the Encoder for encoding. 
-        The encoded string is sent back to the travel agency. 
-        Then, the travel agency will send the order in string format to the MultiCellBuffer. 
-        Before sending the order to the MultiCellBuffer, a time stamp must be saved. 
-        When the confirmation of order completion is received, the time of the order will be calculated and saved or printed.
-        */
     }
 
     public class myApplication
@@ -312,12 +317,14 @@ namespace HotelBookingSystem
     // can't just read for hotel, but if hotel finds one, it can erase
     public class MultiCellBuffer
     {
+        public static MultiCellBuffer agency2hotel = new MultiCellBuffer();
+
         private string[] cell;
         private Int32 cellsInUse = 0;
         private Semaphore _pool;
         private ReaderWriterLock rwLock;
 
-        public MultiCellBuffer()
+        private MultiCellBuffer()
         {
             cell = new string[3];
             _pool = new Semaphore(3, 3);
@@ -397,11 +404,13 @@ namespace HotelBookingSystem
     // Bank service; holds the amounts in the bank account and decrypts credit card no's
     public class BankService
     {
+        public static BankService centralBank = new BankService();
+
         private double[] accountAmount;
         private int[] cardNumber;
         private object[] lck;
 
-        public BankService()
+        private BankService()
         {
             accountAmount = new double[5] {0,0,0,0,0};
             cardNumber = new int[5] {-1,-1,-1,-1,-1};
