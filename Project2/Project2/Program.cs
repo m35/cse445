@@ -7,7 +7,13 @@ using System.Threading;
 namespace HotelBookingSystem
 {
     public delegate void priceCutEvent(Int32 price);
-
+    
+    //Hotel Requirements:
+    //  Use pricing model to determine room prices (complete)
+    //  Define a price cut event and call event handlers in Travel Agency(complete)
+    //  Receives orders (strings) (complete)
+    //  Decodes the string (complete)
+    //  Process the order
     public class Hotel
     {
         static Random roomPrice = new Random(); 
@@ -42,7 +48,7 @@ namespace HotelBookingSystem
         public void receiveOrder(string encodedOrder)
         {
             OrderObject order = Coder.Decode(encodedOrder);
-
+            orderProcessing();
         }
 
         /// <summary>
@@ -199,6 +205,7 @@ namespace HotelBookingSystem
             purchaseOrder.cardNo = 3;
 
             Coder.Encode(purchaseOrder);
+            
             
         }
 
