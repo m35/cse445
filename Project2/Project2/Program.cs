@@ -19,6 +19,8 @@ namespace HotelBookingSystem
         static Random roomPrice = new Random(); 
         static Random season = new Random();
         static Random roomCount = new Random();
+        static double tax = .08;
+        static double locCharge = 10;
 
         public static event priceCutEvent promotionalEvent; //price cut event
         private static Int32 currentRoomPrice = 200;
@@ -45,10 +47,12 @@ namespace HotelBookingSystem
             currentRoomPrice = currentPrice;
         }
 
+        
         public void receiveOrder(string encodedOrder)
         {
             OrderObject order = Coder.Decode(encodedOrder);
-            orderProcessing();
+            // This is different than the "order processing thread" so I'm going to comment
+            //orderProcessing();
         }
 
         /// <summary>
@@ -76,11 +80,15 @@ namespace HotelBookingSystem
         /// do not have to consider the conflict among the threads. However, you still need to
         /// coordinate the write and read between the producer and the consumer.
         /// </remarks>
-        private void orderProcessing()
+        private void orderProcessing(OrderObject obj, BankService bank, ConfirmBuffer buf)
         {
-            Thread processingThread; // = new Thread(?);
-            // ... I don't understand what to do next.
-            
+            string validation, result;
+            double toCharge = (obj.unitPrice * Convert.ToDouble(obj.amount)) * (1.0 + tax) + locCharge;
+            Project2.EncryptSvc.ServiceClient client = new Project2.EncryptSvc.ServiceClient();
+
+            validation = bank.chargeAccount(client.Encrypt(Convert.ToString(obj.cardNo)), toCharge);
+            result = "Order for Agency " + obj.senderID + " started at " + obj.timestamp + ", completed " + DateTime.Now;
+            buf.confirm(obj.senderID, result); // stopping here for tonight SH
         }
 
         /// <summary>PricingModel</summary>
@@ -161,6 +169,22 @@ namespace HotelBookingSystem
                 Console.WriteLine("-------------------------------------------------------------------New room price is ${0}", newRoomPrice);
                 Hotel.changePrice(newRoomPrice);
             }
+        }
+    }
+
+    public class ConfirmBuffer
+    {
+        private object[] cbuf;
+
+        public ConfirmBuffer()
+        {
+            cbuf = new object[5];
+        }
+
+        //Needs to evaluate which threads buffer (senderID), (timestamp and validation msg)
+        public void confirm(string id, string msg)
+        {
+            // Stopping here for tonight SH
         }
     }
 
@@ -289,28 +313,29 @@ namespace HotelBookingSystem
     public class MultiCellBuffer
     {
         private string[] cell;
-        private int cellsInUse = 0;
+        private Int32 cellsInUse = 0;
         private Semaphore _pool;
-        private ReaderWriterLock rwLock = new ReaderWriterLock();
+        private ReaderWriterLock rwLock;
 
         public MultiCellBuffer()
         {
             cell = new string[3];
             _pool = new Semaphore(3, 3);
+            rwLock = new ReaderWriterLock();
         }
 
-        public bool checkOpen() { return (cellsInUse < 3); } // true if there's a free cell
+        public bool checkFull() { return (cellsInUse >= 3); } // true if there's no free cell
         public bool checkEmpty() { return (cellsInUse == 0); } // true if there's nothin there
 
         // Hotel checking the orders
         public string getCell(string name)
         {
-            rwLock.AcquireReaderLock(Timeout.Infinite);
+            string ret = "cbl";  // come back later
+            rwLock.AcquireReaderLock(100);
             try
             {
-                //_pool.WaitOne();
                 // Check each cell for price
-                if (checkEmpty()) { }
+                if (checkEmpty()) { } // if it's empty, try again in a bit
                 else
                 {
                     for (int i = 0; i < 3; ++i)
@@ -320,18 +345,23 @@ namespace HotelBookingSystem
                         {
                             string tmp = cell[i];
                             cell[i] = "";
-                            return tmp;
+                            --cellsInUse;
+                            ret = tmp;
                         }
                     }
                 }
             }
             finally
             {
+                if (cellsInUse > 3)
+                    cellsInUse = 3;
+                else if (cellsInUse < 0)
+                    cellsInUse = 0;
+
                 rwLock.ReleaseReaderLock();
             }
 
-            return "cbl";  // come back later
-            //_pool.Release();
+            return ret;
         }
 
         // Travel agent posting orders
@@ -340,29 +370,26 @@ namespace HotelBookingSystem
             _pool.WaitOne();
             // wait forever until other threads are done with their work 
             // (should never deadlock unless another thread never leaves)
-            rwLock.AcquireWriterLock(Timeout.Infinite); 
+            rwLock.AcquireWriterLock(Timeout.Infinite);
             try
             {
                 // Check each cell for price
-                if (checkEmpty()) { }
-                else
-                {
-                    cell[cellsInUse] = order;
-                    ++cellsInUse;
-                }
+                if (checkFull())
+                    return 0;  // if it's full
+
+                ++cellsInUse;
+                cell[cellsInUse - 1] = order;
             }
             finally
             {
-                --cellsInUse;
-                if (cellsInUse > 2)
-                    cellsInUse = 2;
+                if (cellsInUse > 3)
+                    cellsInUse = 3;
                 else if (cellsInUse < 0)
                     cellsInUse = 0;
 
                 rwLock.ReleaseWriterLock();
+                _pool.Release();
             }
-
-            _pool.Release();
             return 1;
         }
     }
@@ -370,37 +397,46 @@ namespace HotelBookingSystem
     // Bank service; holds the amounts in the bank account and decrypts credit card no's
     public class BankService
     {
-        private int[] accountAmount;
+        private double[] accountAmount;
         private int[] cardNumber;
+        private object[] lck;
 
         public BankService()
         {
-            accountAmount = new int[5] {0,0,0,0,0};
+            accountAmount = new double[5] {0,0,0,0,0};
             cardNumber = new int[5] {-1,-1,-1,-1,-1};
+            lck = new object[5];
         }
 
-        public string chargeAccount(string cardNo, int amount) // card is encrypted
+        public string chargeAccount(string cardNo, double amount) // card is encrypted
         {
             Project2.EncryptSvc.ServiceClient client = new Project2.EncryptSvc.ServiceClient();
             int cnum = Convert.ToInt32(client.Decrypt(cardNo));
 
-            for(int i = 0; i < 5; ++i)
+            int j = 0;
+            while (j < 5 && (cnum != cardNumber[j]))
+                ++j;
+
+            if (j > 5)
             {
-                if(cnum == cardNumber[i] &&
-                    amount < accountAmount[i])
+                return "invalid";
+            }
+            lock (lck[j])
+            {
+                if (amount < accountAmount[j])
                 {
-                    accountAmount[i] -= amount;
-                    return "valid";
+                    accountAmount[j] -= amount;
                 }
             }
-            return "not valid";
+
+            return "valid";
         }
 
         public int cardApplication(int amount) // outs the card num
         {
             //Console.WriteLine("Bank application");
             int i = 0;
-            while (cardNumber[i] == 0)
+            while (cardNumber[i] <= 0)
                 ++i;
 
             Random rand = new Random();
