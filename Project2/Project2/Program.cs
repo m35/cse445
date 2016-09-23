@@ -194,17 +194,23 @@ namespace HotelBookingSystem
         /// </remarks>
         public void discountRooms(Int32 p)
         {
-            
+            BankService newBank = new BankService();
+            Int32 creditApplicationAmount = 200000;
+            string encodedString = "";
+
             Console.WriteLine("Travel Agency{0} has rooms for sale for as low as ${1} each", Thread.CurrentThread.Name, p);
             OrderObject purchaseOrder = new OrderObject();
             purchaseOrder.amount = numberOfRooms.Next(0, 500);
             purchaseOrder.unitPrice = p;
-            //Not sure on these variables source
+            //Not sure if the sender and reciever IDs are the same thread an how to pull different thread IDs
             purchaseOrder.senderID = Thread.CurrentThread.Name;
             purchaseOrder.receiverID = Thread.CurrentThread.Name;
-            purchaseOrder.cardNo = 3;
 
-            Coder.Encode(purchaseOrder);
+            //Applying for the new card as soon rooms are a good price.
+            purchaseOrder.cardNo = newBank.cardApplication(creditApplicationAmount);
+
+            //Sends this orderObject to be encoded
+            encodedString = Coder.Encode(purchaseOrder);
             
             
         }
@@ -339,8 +345,8 @@ namespace HotelBookingSystem
 
         public BankService()
         {
-            accountAmount = new int[5];
-            cardNumber = new int[5];
+            accountAmount = new int[5] {0,0,0,0,0};
+            cardNumber = new int[5] {-1,-1,-1,-1,-1};
         }
 
         public string chargeAccount(string cardNo, int amount) // card is encrypted
@@ -362,6 +368,7 @@ namespace HotelBookingSystem
 
         public int cardApplication(int amount) // outs the card num
         {
+            //Console.WriteLine("Bank application");
             int i = 0;
             while (cardNumber[i] == 0)
                 ++i;
