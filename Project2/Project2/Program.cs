@@ -227,7 +227,6 @@ namespace HotelBookingSystem
         public string getConfirmation() 
         {
             // TODO: implement
-            //throw new NotImplementedException(); 
             Int32 IDindex = Convert.ToInt32(Thread.CurrentThread.Name);
             String confirmation = "Not Confirmed";
             if (cbuf[IDindex - 1] != null)
@@ -243,7 +242,8 @@ namespace HotelBookingSystem
         private string agencyName;
         public string Name { get { return agencyName; } }
 
-        Random numberOfRooms = new Random();
+        private Random numberOfRooms = new Random();
+        private Random demand = new Random();
 
         public TravelAgency(string name)
         {
@@ -313,7 +313,6 @@ namespace HotelBookingSystem
         {
             Int32 numberOfRooms = 0;
             Int32 priceDif = oldPrice - newPrice;
-            Random demand = new Random();
             Int32 currentDemand = demand.Next(0, 10);
             if (priceDif > 400)
             {
