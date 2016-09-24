@@ -276,6 +276,9 @@ namespace HotelBookingSystem
             //Sends this orderObject to be encoded
             encodedString = Coder.Encode(purchaseOrder);
 
+            Console.WriteLine("[Agency {0}] Places an order with hotel {1} for {2} rooms",
+                                Name, hotelName, purchaseOrder.amount);
+
             MultiCellBuffer.agency2hotel.setCell(hotelName, encodedString);
         }
 
@@ -326,7 +329,7 @@ namespace HotelBookingSystem
             hotels[2] = new Hotel("Ramada");
 
             TravelAgency[] travelAgencies = new TravelAgency[5];
-            travelAgencies[0] = new TravelAgency("Cruise");
+            travelAgencies[0] = new TravelAgency("Kruise");
             travelAgencies[1] = new TravelAgency("Sunrunner");
             travelAgencies[2] = new TravelAgency("Winds");
             travelAgencies[3] = new TravelAgency("Colonial");
@@ -565,7 +568,7 @@ namespace HotelBookingSystem
     }
 
     // Encoder/decoder. Handle non-orders in hotel or travel agent
-    // entries seperated by ','
+    // entries separated by ','
     public static class Coder
     {
         public static string Encode(OrderObject obj)
