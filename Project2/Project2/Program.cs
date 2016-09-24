@@ -248,10 +248,14 @@ namespace HotelBookingSystem
 
         private Random numberOfRooms = new Random();
         private Random demand = new Random();
+        private int angencyCreditCard;
 
         public TravelAgency(string name)
         {
             agencyName = name;
+            //Applying for the new card as soon rooms are a good price.
+            Int32 creditApplicationAmount = 200000;
+            angencyCreditCard = BankService.centralBank.cardApplication(creditApplicationAmount);
         }
 
         /// <summary>Entry point for TravelAgency thread.</summary>
@@ -286,7 +290,6 @@ namespace HotelBookingSystem
         public void discountRooms(string hotelName, Int32 previousPrice, Int32 p)
         {
             Int32 demand = howManyRoomsToOrder(p, previousPrice);
-            Int32 creditApplicationAmount = 200000;
             string encodedString = "";
 
             Console.WriteLine("Hotel {0} has rooms for sale for as low as ${1} each", hotelName, p);
@@ -299,7 +302,7 @@ namespace HotelBookingSystem
             purchaseOrder.receiverID = hotelName;
 
             //Applying for the new card as soon rooms are a good price.
-            purchaseOrder.cardNo = BankService.centralBank.cardApplication(creditApplicationAmount);
+            purchaseOrder.cardNo = angencyCreditCard;
 
             DateTime now = DateTime.Now;
             purchaseOrder.timestamp = now.ToShortDateString() + " " + now.ToShortTimeString();
