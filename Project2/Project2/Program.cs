@@ -20,7 +20,7 @@ namespace HotelBookingSystem
         /// There is a counter p in the Hotel. After p (e.g., p = 20) price cuts have been made, a
         /// Hotel thread will terminate.
         /// </summary>
-        private int priceCutsUntilExit = 36;
+        private int priceCutsUntilExit = 20;
 
         private string hotelName;
         public string Name { get { return hotelName; } }
