@@ -20,6 +20,14 @@ namespace HotelBookingSystem
         public event priceCutEvent promotionalEvent; //price cut event
         private Int32 currentRoomPrice = 200;
 
+        private string hotelName;
+        public string Name { get { return hotelName; } }
+
+        public Hotel(string name)
+        {
+            hotelName = name;
+        }
+
         /// <summary>
         /// Changes the price and notifies all listeners (in our case TravelAgencies).
         /// </summary>
@@ -227,7 +235,16 @@ namespace HotelBookingSystem
 
     public class TravelAgency
     {
+        private string agencyName;
+        public string Name { get { return agencyName; } }
+
         Random numberOfRooms = new Random();
+
+        public TravelAgency(string name)
+        {
+            agencyName = name;
+        }
+
         /// <summary>Entry point for TravelAgency thread.</summary>
         /// <remarks>
         /// The thread will terminate after the Hotel thread has terminated.
@@ -322,15 +339,20 @@ namespace HotelBookingSystem
             // when starting threads before everything is setup
 
             Hotel[] hotels = new Hotel[3];
-            for (int i = 0; i < hotels.Length; i++)
-            {
-                hotels[i] = new Hotel();
-            }
+            hotels[0] = new Hotel("Hyatt");
+            hotels[1] = new Hotel("Hilton");
+            hotels[2] = new Hotel("Ramada");
 
             TravelAgency[] travelAgencies = new TravelAgency[5];
+            travelAgencies[0] = new TravelAgency("Cruise");
+            travelAgencies[1] = new TravelAgency("Sunrunner");
+            travelAgencies[2] = new TravelAgency("Winds");
+            travelAgencies[3] = new TravelAgency("Colonial");
+            travelAgencies[4] = new TravelAgency("Chanteclair");
+
+            // connect the events
             for (int i = 0; i < travelAgencies.Length; i++)
             {
-                travelAgencies[i] = new TravelAgency();
                 for (int j = 0; j < hotels.Length; j++)
                 {
                     hotels[j].promotionalEvent += new priceCutEvent(travelAgencies[i].discountRooms);
@@ -340,19 +362,22 @@ namespace HotelBookingSystem
             // -- Now start all the threads --
             // one thread for each instance
 
-            for (int i = 0; i < 3; i++)
-            {
-                Thread hotelThread = new Thread(new ThreadStart(hotels[i].HotelAdvertiseFunc));
-                hotelThread.Name = (i + 1).ToString();
-                hotelThread.Start();
-            }
-
+            // start travel agency first to they'll be ready for any price cuts or confirmations
             for (int i = 0; i < 5; i++)
             {
                 Thread travelAgencyThread = new Thread(new ThreadStart(travelAgencies[i].getHotelRates));
-                travelAgencyThread.Name = (i + 1).ToString();
+                travelAgencyThread.Name = String.Format("TravelAgency{0} {1}", i + 1, travelAgencies[i].Name);
                 travelAgencyThread.Start();
             }
+
+            // finally hotels
+            for (int i = 0; i < 3; i++)
+            {
+                Thread hotelThread = new Thread(new ThreadStart(hotels[i].HotelAdvertiseFunc));
+                hotelThread.Name = String.Format("Hotel{0} {1}", i + 1, hotels[i].Name);
+                hotelThread.Start();
+            }
+
         }
     }
 
