@@ -11,17 +11,19 @@ namespace HotelBookingSystem
    
     public class Hotel
     {
-        static Random roomPrice = new Random(); 
-        static Random season = new Random();
-        static Random roomCount = new Random();
-        static double tax = .08;
-        static double locCharge = 10;
+        public static Hotel masterHotel = new Hotel();
 
-        public static event priceCutEvent promotionalEvent; //price cut event
-        private static Int32 currentRoomPrice = 200;
+        private Random roomPrice = new Random();
+        private Random season = new Random();
+        private Random roomCount = new Random();
+        private const double tax = .08;
+        private const double locCharge = 10;
+
+        public event priceCutEvent promotionalEvent; //price cut event
+        private Int32 currentRoomPrice = 200;
 
         /// <returns>Return the current room price (subject to change without notice, terms and conditions may apply).</returns>
-        public static Int32 getPrice()
+        public Int32 getPrice()
         {
             return currentRoomPrice;
         }
@@ -29,7 +31,7 @@ namespace HotelBookingSystem
         /// <summary>
         /// Changes the price and notifies all listeners (in our case TravelAgencies).
         /// </summary>
-        public static void changePrice(Int32 currentPrice)
+        public void changePrice(Int32 currentPrice)
         {
             if (currentPrice < currentRoomPrice)
             {
@@ -233,7 +235,7 @@ namespace HotelBookingSystem
 
     public class TravelAgency
     {
-        static Random numberOfRooms = new Random();
+        Random numberOfRooms = new Random();
         Int32 previousPrice = 0;
         /// <summary>Entry point for TravelAgency thread.</summary>
         /// <remarks>
@@ -244,7 +246,7 @@ namespace HotelBookingSystem
             for (Int32 i = 0; i < 10; i++)
             {
                 Thread.Sleep(1000);
-                Int32 roomPrice = Hotel.getPrice();
+                Int32 roomPrice = Hotel.masterHotel.getPrice();
                 previousPrice = roomPrice;
                 string confirmation = ConfirmBuffer.hotel2agency.getConfirmation();
                 if(confirmation != "Not Confirmed")
@@ -326,17 +328,16 @@ namespace HotelBookingSystem
     {
         static void Main(string[] args)
         {
-            Hotel randomHotel = new Hotel();
             Thread[] hotels = new Thread[3];
             for (int i = 0; i < 3; i++)
             {
-                hotels[i] = new Thread(new ThreadStart(randomHotel.HotelAdvertiseFunc));
+                hotels[i] = new Thread(new ThreadStart(Hotel.masterHotel.HotelAdvertiseFunc));
                 hotels[i].Name = (i + 1).ToString();
                 hotels[i].Start();
             }
 
             TravelAgency randomTravelAgency = new TravelAgency();
-            Hotel.promotionalEvent += new priceCutEvent(randomTravelAgency.discountRooms);
+            Hotel.masterHotel.promotionalEvent += new priceCutEvent(randomTravelAgency.discountRooms);
             Thread[] travelAgencies = new Thread[5];
             for (int i = 0; i < 5; i++)
             {
