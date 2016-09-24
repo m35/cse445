@@ -11,9 +11,7 @@ namespace HotelBookingSystem
    
     public class Hotel
     {
-        private Random roomPrice = new Random();
-        private Random season = new Random();
-        private Random roomCount = new Random();
+        private Random rng = new Random();
         private const double tax = .08;
         private const double locCharge = 10;
 
@@ -100,7 +98,7 @@ namespace HotelBookingSystem
             string nowString = now.ToShortDateString() + " " + now.ToShortTimeString();
 
             validation = BankService.centralBank.chargeAccount(encryptCC(obj.cardNo), toCharge);
-            msg = String.Format("[Hotel {0}] Order for agency {1} started at {2}, {3} at {4}",
+            msg = String.Format("Order for hotel {0} by agency {1} started at {2}, is {3} at {4}",
                                 Name, obj.senderID, obj.timestamp, validation, nowString);
             MultiCellBuffer.hotel2agency.setCell(obj.senderID, msg);
         }
@@ -139,21 +137,21 @@ namespace HotelBookingSystem
         private Int32 pricingModel() // "the function must take the amount of orders as input"
         {
             Int32 newRoomPrice;
-            Int32 currentSeason = season.Next(1, 4);
-            Int32 roomsAvailable = roomCount.Next(1, 500);
+            Int32 currentSeason = rng.Next(1, 4);
+            Int32 roomsAvailable = rng.Next(1, 500);
             if (currentSeason == 1) //off season
             {
                 if (roomsAvailable > 250)
                 {
-                    newRoomPrice = roomPrice.Next(50, 150);
+                    newRoomPrice = rng.Next(50, 150);
                 }
                 else if (roomsAvailable < 250 && roomsAvailable > 50)
                 {
-                    newRoomPrice = roomPrice.Next(150, 250);
+                    newRoomPrice = rng.Next(150, 250);
                 }
                 else
                 {
-                    newRoomPrice = roomPrice.Next(250, 500);
+                    newRoomPrice = rng.Next(250, 500);
                 }
 
             }
@@ -161,21 +159,21 @@ namespace HotelBookingSystem
             {
                 if (roomsAvailable > 250)
                 {
-                    newRoomPrice = roomPrice.Next(200, 300);
+                    newRoomPrice = rng.Next(200, 300);
                 }
                 else if (roomsAvailable < 250 && roomsAvailable > 50)
                 {
-                    newRoomPrice = roomPrice.Next(300, 400);
+                    newRoomPrice = rng.Next(300, 400);
                 }
                 else
                 {
-                    newRoomPrice = roomPrice.Next(400, 500);
+                    newRoomPrice = rng.Next(400, 500);
                 }
 
             }
             else
             {
-                newRoomPrice = roomPrice.Next(50, 500);
+                newRoomPrice = rng.Next(50, 500);
             }
 
             return newRoomPrice;
@@ -213,8 +211,7 @@ namespace HotelBookingSystem
         private string agencyName;
         public string Name { get { return agencyName; } }
 
-        private Random numberOfRooms = new Random();
-        private Random demand = new Random();
+        private Random rng = new Random();
         private int angencyCreditCard;
 
         public TravelAgency(string name)
@@ -260,7 +257,7 @@ namespace HotelBookingSystem
 
             Console.WriteLine("[Agency {0}] Notified that hotel {1} has rooms at ${2}", Name, hotelName, p);
             OrderObject purchaseOrder = new OrderObject();
-            purchaseOrder.amount = numberOfRooms.Next(0, 500);
+            purchaseOrder.amount = rng.Next(0, 500);
             purchaseOrder.unitPrice = p;
             //Sender is this travel agency
             purchaseOrder.senderID = Name;
@@ -292,7 +289,7 @@ namespace HotelBookingSystem
         {
             Int32 numberOfRooms = 0;
             Int32 priceDif = oldPrice - newPrice;
-            Int32 currentDemand = demand.Next(0, 10);
+            Int32 currentDemand = rng.Next(0, 10);
             if (priceDif > 400)
             {
                 numberOfRooms = 4;
@@ -323,16 +320,27 @@ namespace HotelBookingSystem
             // Initialize first to make sure we don't end up in weird states
             // when starting threads before everything is setup
 
+            // Note: if multiple Random instances are created within about 15ms, 
+            // they will all return the same sequence of values.
+            // Add a little delay between each construction so that doesn't happen.
+
             Hotel[] hotels = new Hotel[3];
             hotels[0] = new Hotel("Hyatt");
+            Thread.Sleep(100);
             hotels[1] = new Hotel("Hilton");
+            Thread.Sleep(100);
             hotels[2] = new Hotel("Ramada");
+            Thread.Sleep(100);
 
             TravelAgency[] travelAgencies = new TravelAgency[5];
             travelAgencies[0] = new TravelAgency("Kruise");
+            Thread.Sleep(100);
             travelAgencies[1] = new TravelAgency("Sunrunner");
+            Thread.Sleep(100);
             travelAgencies[2] = new TravelAgency("Winds");
+            Thread.Sleep(100);
             travelAgencies[3] = new TravelAgency("Colonial");
+            Thread.Sleep(100);
             travelAgencies[4] = new TravelAgency("Chanteclair");
 
             // connect the events
@@ -476,6 +484,7 @@ namespace HotelBookingSystem
         private double[] accountAmount;
         private int[] cardNumber;
         private object[] lck;
+        private Random cardRand = new Random();
 
         public BankService()
         {
@@ -542,8 +551,7 @@ namespace HotelBookingSystem
                 throw new NotImplementedException();
             }
 
-            Random rand = new Random();
-            int temp = (i + 1) * 1000 + rand.Next(0, 999);
+            int temp = (i + 1) * 1000 + cardRand.Next(0, 999);
 
             cardNumber[i] = temp;
             accountAmount[i] = amount;
