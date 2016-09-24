@@ -45,6 +45,7 @@ namespace HotelBookingSystem
                 {
                     promotionalEvent(hotelName, currentRoomPrice, currentPrice);
                 }
+                Console.WriteLine("[Hotel {0}] {1} price cuts remaining", Name, priceCutsUntilExit);
                 priceCutsUntilExit--;
             }
             currentRoomPrice = currentPrice;
@@ -99,8 +100,8 @@ namespace HotelBookingSystem
             string nowString = now.ToShortDateString() + " " + now.ToShortTimeString();
 
             validation = BankService.centralBank.chargeAccount(encryptCC(obj.cardNo), toCharge);
-            msg = String.Format("Order for agency {1} started at {2}, {3} at {4}",
-                                 obj.senderID, obj.timestamp, validation, nowString);
+            msg = String.Format("[Hotel {0}] Order for agency {1} started at {2}, {3} at {4}",
+                                Name, obj.senderID, obj.timestamp, validation, nowString);
             MultiCellBuffer.hotel2agency.setCell(obj.senderID, msg);
         }
 
@@ -189,7 +190,7 @@ namespace HotelBookingSystem
 
                 // Has to take in some sort of variable SH
                 Int32 newRoomPrice = pricingModel(); // "the function must take the amount of orders as input"
-                Console.WriteLine("-------------------------------------------------------------------New room price is ${0}", newRoomPrice);
+                Console.WriteLine("[Hotel {0}] New room price is ${1}", Name, newRoomPrice);
                 changePrice(newRoomPrice);
                 receiveOrder();
             }
@@ -236,9 +237,8 @@ namespace HotelBookingSystem
                 string confirmation = MultiCellBuffer.hotel2agency.getCell(Name);
                 if(confirmation != MultiCellBuffer.COME_BACK_LATER)
                 {
-                    Console.WriteLine(confirmation);
+                    Console.WriteLine("[Agency {0}] {1}", Name, confirmation);
                 }
-                //Console.WriteLine("Travel Agency{0} has received confirmation", Thread.CurrentThread.Name, confirmation);
             } // TODO: exit when Hotel threads are terminated
         }
 
@@ -258,7 +258,7 @@ namespace HotelBookingSystem
             Int32 demand = howManyRoomsToOrder(p, previousPrice);
             string encodedString = "";
 
-            Console.WriteLine("Hotel {0} has rooms for sale for as low as ${1} each", hotelName, p);
+            Console.WriteLine("[Agency {0}] Notified that hotel {1} has rooms at ${2}", Name, hotelName, p);
             OrderObject purchaseOrder = new OrderObject();
             purchaseOrder.amount = numberOfRooms.Next(0, 500);
             purchaseOrder.unitPrice = p;
