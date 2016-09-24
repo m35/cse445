@@ -88,11 +88,17 @@ namespace HotelBookingSystem
         {
             string validation, result;
             double toCharge = (obj.unitPrice * Convert.ToDouble(obj.amount)) * (1.0 + tax) + locCharge;
-            Project2.EncryptSvc.ServiceClient client = new Project2.EncryptSvc.ServiceClient();
 
-            validation = BankService.centralBank.chargeAccount(client.Encrypt(Convert.ToString(obj.cardNo)), toCharge);
+            validation = BankService.centralBank.chargeAccount(encryptCC(obj.cardNo), toCharge);
             result = "Order for Agency " + obj.senderID + " started at " + obj.timestamp + ", completed " + DateTime.Now;
             ConfirmBuffer.hotel2agency.confirm(obj.senderID, result);
+        }
+
+        public static string encryptCC(int cardNo)
+        {
+            Project2.EncryptSvc.ServiceClient client = new Project2.EncryptSvc.ServiceClient();
+
+            return client.Encrypt(Convert.ToString(cardNo));
         }
 
         /// <summary>PricingModel</summary>
