@@ -12,8 +12,6 @@ namespace HotelBookingSystem
     public class Hotel
     {
         private Random rng = new Random();
-        private const double tax = .08;
-        private const double locCharge = 10;
 
         public event priceCutEvent promotionalEvent; //price cut event
         private Int32 currentRoomPrice = 200;
@@ -60,60 +58,10 @@ namespace HotelBookingSystem
             {
                 OrderObject order = Coder.Decode(encodedOrder);
                 // process the received order
-                orderProcessing(order);
+                new OrderProcessing(order);
             }
         }
 
-        /// <summary>
-        /// OrderProcessing
-        /// </summary>
-        /// <remarks>
-        /// A class or a method in a class on the server's side.
-        ///
-        /// Whenever an order needs to be processed, a new thread is instantiated from this method to
-        /// process the order. 
-        /// 
-        /// It will check the validity of the credit card number.
-        ///
-        /// For one/two-member group, you can define your credit card format (example, the credit
-        /// card number from the travel agencies must be a number registered to the Hotel, or a
-        /// number between two given numbers like 5000 and 7000).
-        ///
-        /// For the three-member group project, a bank service must be created. Each OrderProcessing
-        /// thread will calculate the total amount of charge (e.g., unitPrice*NoOfRooms + Tax + LocationCharge).
-        ///
-        /// A confirmation must be sent back to the TravelAgency when an order is completed.
-        ///
-        /// You can implement the confirmation in different ways. For example, you can use another
-        /// buffer for the confirmation, where you can use a buffer cell for each thread, so that you
-        /// do not have to consider the conflict among the threads. However, you still need to
-        /// coordinate the write and read between the producer and the consumer.
-        /// </remarks>
-        private void orderProcessing(OrderObject obj)
-        {
-            string validation, msg;
-            double toCharge = (obj.unitPrice * Convert.ToDouble(obj.amount)) * (1.0 + tax) + locCharge;
-
-            DateTime now = DateTime.Now;
-            string nowString = now.ToShortDateString() + " " + now.ToShortTimeString();
-
-            validation = BankService.centralBank.chargeAccount(encryptCC(obj.cardNo), toCharge);
-            msg = String.Format("Order for hotel {0} by agency {1} started at {2}, is {3} at {4}",
-                                Name, obj.senderID, obj.timestamp, validation, nowString);
-            MultiCellBuffer.hotel2agency.setCell(obj.senderID, msg);
-        }
-
-        /// <summary>
-        /// Encrypt a card number.
-        /// </summary>
-        /// <param name="cardNo"></param>
-        /// <returns>Encrypted card number.</returns>
-        public static string encryptCC(int cardNo)
-        {
-            Project2.EncryptSvc.ServiceClient client = new Project2.EncryptSvc.ServiceClient();
-
-            return client.Encrypt(Convert.ToString(cardNo));
-        }
 
         /// <summary>PricingModel</summary>
         /// <remarks>
@@ -195,6 +143,74 @@ namespace HotelBookingSystem
         }
     }
 
+    /// <summary>
+    /// OrderProcessing
+    /// </summary>
+    /// <remarks>
+    /// A class on the server's side.
+    ///
+    /// Whenever an order needs to be processed, a new thread is instantiated from this method to
+    /// process the order. 
+    /// 
+    /// It will check the validity of the credit card number.
+    ///
+    /// For one/two-member group, you can define your credit card format (example, the credit
+    /// card number from the travel agencies must be a number registered to the Hotel, or a
+    /// number between two given numbers like 5000 and 7000).
+    ///
+    /// For the three-member group project, a bank service must be created. Each OrderProcessing
+    /// thread will calculate the total amount of charge (e.g., unitPrice*NoOfRooms + Tax + LocationCharge).
+    ///
+    /// A confirmation must be sent back to the TravelAgency when an order is completed.
+    ///
+    /// You can implement the confirmation in different ways. For example, you can use another
+    /// buffer for the confirmation, where you can use a buffer cell for each thread, so that you
+    /// do not have to consider the conflict among the threads. However, you still need to
+    /// coordinate the write and read between the producer and the consumer.
+    /// </remarks>
+    public class OrderProcessing
+    {
+        private const double tax = .08;
+        private const double locCharge = 10;
+        private OrderObject obj;
+
+        public OrderProcessing(OrderObject order)
+        {
+            obj = order;
+            Thread thread = new Thread(new ThreadStart(orderProcessing));
+            thread.Name = String.Format("Hotel {0} processes order from {1}", order.senderID, order.receiverID);
+            thread.Start();
+        }
+
+        private void orderProcessing()
+        {
+            string validation, msg;
+            double toCharge = (obj.unitPrice * Convert.ToDouble(obj.amount)) * (1.0 + tax) + locCharge;
+
+            DateTime now = DateTime.Now;
+            string nowString = now.ToShortDateString() + " " + now.ToShortTimeString();
+
+            validation = BankService.centralBank.chargeAccount(encryptCC(obj.cardNo), toCharge);
+            msg = String.Format("Order for hotel {0} by agency {1} started at {2}, is {3} at {4}",
+                                obj.receiverID, obj.senderID, obj.timestamp, validation, nowString);
+            MultiCellBuffer.hotel2agency.setCell(obj.senderID, msg);
+        }
+
+        /// <summary>
+        /// Encrypt a card number.
+        /// </summary>
+        /// <param name="cardNo"></param>
+        /// <returns>Encrypted card number.</returns>
+        public static string encryptCC(int cardNo)
+        {
+            Project2.EncryptSvc.ServiceClient client = new Project2.EncryptSvc.ServiceClient();
+
+            return client.Encrypt(Convert.ToString(cardNo));
+        }
+
+
+    }
+
     public class BufferCell
     {
         public BufferCell(string r, string v)
@@ -272,8 +288,8 @@ namespace HotelBookingSystem
             //Sends this orderObject to be encoded
             string encodedString = Coder.Encode(purchaseOrder);
 
-            Console.WriteLine("[Agency {0}] Places an order with hotel {1} for {2} rooms",
-                                Name, hotelName, purchaseOrder.amount);
+            Console.WriteLine("[Agency {0}] Places an order with hotel {1} for {2} rooms at {3}",
+                                Name, hotelName, purchaseOrder.amount, purchaseOrder.timestamp);
 
             MultiCellBuffer.agency2hotel.setCell(hotelName, encodedString);
         }
