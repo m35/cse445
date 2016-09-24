@@ -253,7 +253,6 @@ namespace HotelBookingSystem
         public void discountRooms(string hotelName, Int32 previousPrice, Int32 p)
         {
             Int32 demand = howManyRoomsToOrder(p, previousPrice);
-            string encodedString = "";
 
             Console.WriteLine("[Agency {0}] Notified that hotel {1} has rooms at ${2}", Name, hotelName, p);
             OrderObject purchaseOrder = new OrderObject();
@@ -271,7 +270,7 @@ namespace HotelBookingSystem
             purchaseOrder.timestamp = now.ToShortDateString() + " " + now.ToShortTimeString();
 
             //Sends this orderObject to be encoded
-            encodedString = Coder.Encode(purchaseOrder);
+            string encodedString = Coder.Encode(purchaseOrder);
 
             Console.WriteLine("[Agency {0}] Places an order with hotel {1} for {2} rooms",
                                 Name, hotelName, purchaseOrder.amount);
