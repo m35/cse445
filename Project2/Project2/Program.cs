@@ -12,6 +12,7 @@ namespace HotelBookingSystem
     public class Hotel
     {
         private Random rng = new Random();
+        private int orderCount;
 
         public event priceCutEvent promotionalEvent; //price cut event
         private Int32 currentRoomPrice = 200;
@@ -84,7 +85,7 @@ namespace HotelBookingSystem
         /// other times within your iterations of testing.
         /// </remarks>
         /// <returns>The new price for a room.</returns>
-        private Int32 pricingModel() // "the function must take the amount of orders as input"
+        private Int32 pricingModel()
         {
             Int32 newRoomPrice;
             Int32 currentSeason = rng.Next(1, 4);
@@ -126,6 +127,7 @@ namespace HotelBookingSystem
                 newRoomPrice = rng.Next(50, 500);
             }
 
+            newRoomPrice += Convert.ToInt32(orderCount * 0.5); // surcharge for every order filled between pricecuts
             return newRoomPrice;
         }
 
@@ -135,9 +137,8 @@ namespace HotelBookingSystem
             while (priceCutsUntilExit >= 0)
             {
                 Thread.Sleep(2000);
-
-                // Has to take in some sort of variable SH
-                Int32 newRoomPrice = pricingModel(); // TODO: "the function must take the amount of orders as input"
+                
+                Int32 newRoomPrice = pricingModel();
                 Console.WriteLine("[Hotel {0}] New room price is ${1}", Name, newRoomPrice);
                 changePrice(newRoomPrice);
                 receiveOrder();
