@@ -8,12 +8,7 @@ namespace HotelBookingSystem
 {
     public delegate void priceCutEvent(Int32 price);
     
-    //Hotel Requirements:
-    //  Use pricing model to determine room prices (complete)
-    //  Define a price cut event and call event handlers in Travel Agency(complete)
-    //  Receives orders (strings) (complete)
-    //  Decodes the string (complete)
-    //  Process the order
+   
     public class Hotel
     {
         static Random roomPrice = new Random(); 
@@ -46,7 +41,9 @@ namespace HotelBookingSystem
             currentRoomPrice = currentPrice;
         }
 
-        
+        ///<summary>
+        ///Attempt to receive the order. If orders are available then decode.
+        ///</summary> 
         public void receiveOrder()
         {
             // check if any orders are available
@@ -94,6 +91,11 @@ namespace HotelBookingSystem
             ConfirmBuffer.hotel2agency.confirm(obj.senderID, result);
         }
 
+        /// <summary>
+        /// Encrypt a card number.
+        /// </summary>
+        /// <param name="cardNo"></param>
+        /// <returns>Encrypted card number.</returns>
         public static string encryptCC(int cardNo)
         {
             Project2.EncryptSvc.ServiceClient client = new Project2.EncryptSvc.ServiceClient();
@@ -263,7 +265,12 @@ namespace HotelBookingSystem
             MultiCellBuffer.agency2hotel.setCell(encodedString);
         }
 
-        //Finds a number of rooms to order based on a random demand and the price differences.
+       /// <summary>
+       /// Calculate the number of rooms to order based on price differences and room demand.
+       /// </summary>
+       /// <param name="newPrice"></param>
+       /// <param name="oldPrice"></param>
+       /// <returns>The number of rooms that will be ordered.</returns>
         private int howManyRoomsToOrder(Int32 newPrice, Int32 oldPrice)
         {
             Int32 numberOfRooms = 0;
