@@ -189,26 +189,45 @@ namespace HotelBookingSystem
     {
         public static ConfirmBuffer hotel2agency = new ConfirmBuffer();
 
-        private object[] cbuf;
+        private string[] cbuf;
 
         private ConfirmBuffer()
         {
-            cbuf = new object[5];
+            cbuf = new string[5];
         }
 
         //Needs to evaluate which threads buffer (senderID), (timestamp and validation msg)
+        /// <summary>
+        /// Stores a confirmation for the appropriate Travel Agency.
+        /// Sent from hotel.orderprocessing
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="msg"></param>
         public void confirm(string id, string msg)
         {
             // Stopping here for tonight SH
-           
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+            Int32 IDindex = Convert.ToInt32(id);
+            cbuf[IDindex - 1] = msg;
         }
 
+        /// <summary>
+        /// This will use the thread name as an index and check the appropriate 
+        /// place in the array. If the memory is not null it will a string to Travel 
+        /// Agency.getHotelRates()
+        /// </summary>
+        /// <returns>"not confirmed or confirmed"</returns>
         public string getConfirmation() 
         {
             // TODO: implement
-            throw new NotImplementedException();  
-            
+            //throw new NotImplementedException(); 
+            Int32 IDindex = Convert.ToInt32(Thread.CurrentThread.Name);
+            String confirmation = "Not Confirmed";
+            if (cbuf[IDindex - 1] != null)
+            {
+                confirmation = cbuf[IDindex - 1];
+            }
+            return confirmation;
         }
     }
 
@@ -228,7 +247,11 @@ namespace HotelBookingSystem
                 Int32 roomPrice = Hotel.getPrice();
                 previousPrice = roomPrice;
                 string confirmation = ConfirmBuffer.hotel2agency.getConfirmation();
-                Console.WriteLine("Travel Agency{0} has received confirmation", Thread.CurrentThread.Name, confirmation);
+                if(confirmation != "Not Confirmed")
+                {
+                    Console.WriteLine(confirmation);
+                }
+                //Console.WriteLine("Travel Agency{0} has received confirmation", Thread.CurrentThread.Name, confirmation);
             } // TODO: exit when Hotel threads are terminated
         }
 
