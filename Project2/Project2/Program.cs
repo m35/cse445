@@ -20,6 +20,12 @@ namespace HotelBookingSystem
         public event priceCutEvent promotionalEvent; //price cut event
         private Int32 currentRoomPrice = 200;
 
+        /// <summary>
+        /// There is a counter p in the Hotel. After p (e.g., p = 20) price cuts have been made, a
+        /// Hotel thread will terminate.
+        /// </summary>
+        private int priceCutsUntilExit = 36;
+
         private string hotelName;
         public string Name { get { return hotelName; } }
 
@@ -39,6 +45,7 @@ namespace HotelBookingSystem
                 {
                     promotionalEvent(hotelName, currentRoomPrice, currentPrice);
                 }
+                priceCutsUntilExit--;
             }
             currentRoomPrice = currentPrice;
         }
@@ -172,9 +179,7 @@ namespace HotelBookingSystem
         /// <summary>Entry point for Hotel thread.</summary>
         public void HotelAdvertiseFunc()
         {
-            const Int32 PRICE_CHANGES_UNTIL_EXIT = 36;
-
-            for (Int32 i = 0; i < PRICE_CHANGES_UNTIL_EXIT; i++)
+            while (priceCutsUntilExit >= 0)
             {
                 Thread.Sleep(2000);
 
