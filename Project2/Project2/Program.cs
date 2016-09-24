@@ -406,47 +406,76 @@ namespace HotelBookingSystem
     {
         public static BankService centralBank = new BankService();
 
+        private const int MAX_CARD_ACCOUNTS = 5;
+
         private double[] accountAmount;
         private int[] cardNumber;
         private object[] lck;
 
-        private BankService()
+        public BankService()
         {
-            accountAmount = new double[5] {0,0,0,0,0};
-            cardNumber = new int[5] {-1,-1,-1,-1,-1};
-            lck = new object[5];
+            accountAmount = new double[MAX_CARD_ACCOUNTS] {0,0,0,0,0};
+            cardNumber = new int[MAX_CARD_ACCOUNTS] {-1,-1,-1,-1,-1};
+            lck = new object[MAX_CARD_ACCOUNTS];
+            for (int i = 0; i < MAX_CARD_ACCOUNTS; i++)
+            {
+                lck[i] = new object();
+            }
         }
 
+        /// <summary>Charge the given credit card the amount given.</summary>
+        /// <remarks>
+        /// The bank charges the account and returns the message "valid" if the account exists and
+        /// the funds are sufficient for the purchase, otherwise, it returns "not valid"
+        /// </remarks>
+        /// <returns>"valid" or "not valid"</returns>
         public string chargeAccount(string cardNo, double amount) // card is encrypted
         {
             Project2.EncryptSvc.ServiceClient client = new Project2.EncryptSvc.ServiceClient();
             int cnum = Convert.ToInt32(client.Decrypt(cardNo));
 
             int j = 0;
-            while (j < 5 && (cnum != cardNumber[j]))
+            while (j < MAX_CARD_ACCOUNTS && (cnum != cardNumber[j]))
                 ++j;
 
-            if (j > 5)
+            string result;
+
+            if (j >= MAX_CARD_ACCOUNTS) 
             {
-                return "invalid";
+                // account not found
+                result = "not valid";
             }
-            lock (lck[j])
+            else
             {
-                if (amount < accountAmount[j])
+                lock (lck[j])
                 {
-                    accountAmount[j] -= amount;
+                    if (amount <= accountAmount[j])
+                    {
+                        accountAmount[j] -= amount;
+                        result = "valid";
+                    }
+                    else
+                    {
+                        // insufficient funds
+                        result = "not valid";
+                    }
                 }
             }
 
-            return "valid";
+            return result;
         }
 
         public int cardApplication(int amount) // outs the card num
         {
             //Console.WriteLine("Bank application");
             int i = 0;
-            while (cardNumber[i] <= 0)
+            while (i < MAX_CARD_ACCOUNTS && cardNumber[i] != -1)
                 ++i;
+            if (i >= MAX_CARD_ACCOUNTS)
+            {
+                // TODO: no free CC slots
+                throw new NotImplementedException();
+            }
 
             Random rand = new Random();
             int temp = (i + 1) * 1000 + rand.Next(0, 999);
