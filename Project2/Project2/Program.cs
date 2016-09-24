@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace HotelBookingSystem
 {
-    public delegate void priceCutEvent(Int32 oldPrice, Int32 newPrice);
+    public delegate void priceCutEvent(string hotelName, Int32 oldPrice, Int32 newPrice);
     
    
     public class Hotel
@@ -37,7 +37,7 @@ namespace HotelBookingSystem
             {
                 if (promotionalEvent != null)
                 {
-                    promotionalEvent(currentRoomPrice, currentPrice);
+                    promotionalEvent(hotelName, currentRoomPrice, currentPrice);
                 }
             }
             currentRoomPrice = currentPrice;
@@ -273,19 +273,21 @@ namespace HotelBookingSystem
         /// The travel agency will calculate the number of rooms to order, for example, based on the
         /// need and the difference between the previous price and the current price.
         /// </remarks>
-        public void discountRooms(Int32 previousPrice, Int32 p)
+        /// <param name="hotelName">Name of the hotel that has the discount</param>
+        public void discountRooms(string hotelName, Int32 previousPrice, Int32 p)
         {
             Int32 demand = howManyRoomsToOrder(p, previousPrice);
             Int32 creditApplicationAmount = 200000;
             string encodedString = "";
 
-            Console.WriteLine("Travel Agency{0} has rooms for sale for as low as ${1} each", Thread.CurrentThread.Name, p);
+            Console.WriteLine("Hotel {0} has rooms for sale for as low as ${1} each", hotelName, p);
             OrderObject purchaseOrder = new OrderObject();
             purchaseOrder.amount = numberOfRooms.Next(0, 500);
             purchaseOrder.unitPrice = p;
-            //Not sure if the sender and reciever IDs are the same thread an how to pull different thread IDs
-            purchaseOrder.senderID = Thread.CurrentThread.Name;
-            purchaseOrder.receiverID = Thread.CurrentThread.Name;
+            //Sender is this travel agency
+            purchaseOrder.senderID = Name;
+            //Send the order to the hotel that has the discount
+            purchaseOrder.receiverID = hotelName;
 
             //Applying for the new card as soon rooms are a good price.
             purchaseOrder.cardNo = BankService.centralBank.cardApplication(creditApplicationAmount);
