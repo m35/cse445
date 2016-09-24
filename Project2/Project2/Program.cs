@@ -291,7 +291,10 @@ namespace HotelBookingSystem
             Console.WriteLine("[Agency {0}] Places an order with hotel {1} for {2} rooms at {3}",
                                 Name, hotelName, purchaseOrder.amount, purchaseOrder.timestamp);
 
-                MultiCellBuffer.agencySendOrderToHotel.setCell(hotelName, encodedString);
+            // try to send the order to the hotel
+            // if the hotel doesn't accept it within 3 seconds,
+            // it must be overbooked, so give up
+            MultiCellBuffer.agencySendOrderToHotel.setCell(hotelName, encodedString, 3000);
         }
 
        /// <summary>
@@ -453,23 +456,32 @@ namespace HotelBookingSystem
         // Add a cell for another thread to pickup
         public void setCell(string receiver, string order)
         {
-            // wait forever until a cell is free
-            _pool.WaitOne();
-            // wait forever until other threads are done with their work 
-            // (should never deadlock unless another thread never leaves)
-            lock(this)
+            setCell(receiver, order, -1);
+        }
+
+        // Add a cell for another thread to pickup
+        public void setCell(string receiver, string order, int millisecondTimeout)
+        {
+            // wait until a cell is free
+            if (_pool.WaitOne(millisecondTimeout))
             {
-                // guaranteed a cell is free, just gotta find it
-                for (int i = 0; i < cellCount; i++)
+                // wait forever until other threads are done with their work 
+                // (should never deadlock unless another thread never leaves)
+                lock (this)
                 {
-                    if (cell[i] == null)
+                    // guaranteed a cell is free, just gotta find it
+                    for (int i = 0; i < cellCount; i++)
                     {
-                        cell[i] = new BufferCell(receiver, order);
-                        break;
+                        if (cell[i] == null)
+                        {
+                            cell[i] = new BufferCell(receiver, order);
+                            break;
+                        }
                     }
+                    ++cellsInUse;
                 }
-                ++cellsInUse;
             }
+            // if no cell was free in time, just give up
         }
     }
 
