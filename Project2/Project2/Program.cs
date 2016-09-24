@@ -56,7 +56,7 @@ namespace HotelBookingSystem
         public void receiveOrder()
         {
             // check if any orders are available
-            string encodedOrder = MultiCellBuffer.agency2hotel.getCell(Thread.CurrentThread.Name);
+            string encodedOrder = MultiCellBuffer.agency2hotel.getCell(Name);
             if (encodedOrder != MultiCellBuffer.COME_BACK_LATER)
             {
                 OrderObject order = Coder.Decode(encodedOrder);
@@ -101,7 +101,7 @@ namespace HotelBookingSystem
             validation = BankService.centralBank.chargeAccount(encryptCC(obj.cardNo), toCharge);
             msg = String.Format("Order for agency {1} started at {2}, {3} at {4}",
                                  obj.senderID, obj.timestamp, validation, nowString);
-            ConfirmBuffer.hotel2agency.confirm(obj.senderID, msg);
+            MultiCellBuffer.hotel2agency.setCell(obj.senderID, msg);
         }
 
         /// <summary>
@@ -196,49 +196,15 @@ namespace HotelBookingSystem
         }
     }
 
-    public class ConfirmBuffer
+    public class BufferCell
     {
-        public static ConfirmBuffer hotel2agency = new ConfirmBuffer();
-
-        private string[] cbuf;
-
-        private ConfirmBuffer()
+        public BufferCell(string r, string v)
         {
-            cbuf = new string[5];
+            receiver = r;
+            value = v;
         }
-
-        //Needs to evaluate which threads buffer (senderID), (timestamp and validation msg)
-        /// <summary>
-        /// Stores a confirmation for the appropriate Travel Agency.
-        /// Sent from hotel.orderprocessing
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="msg"></param>
-        public void confirm(string id, string msg)
-        {
-            // Stopping here for tonight SH
-            //throw new NotImplementedException();
-            Int32 IDindex = Convert.ToInt32(id);
-            cbuf[IDindex - 1] = msg;
-        }
-
-        /// <summary>
-        /// This will use the thread name as an index and check the appropriate 
-        /// place in the array. If the memory is not null it will a string to Travel 
-        /// Agency.getHotelRates()
-        /// </summary>
-        /// <returns>"not confirmed or confirmed"</returns>
-        public string getConfirmation() 
-        {
-            // TODO: implement
-            Int32 IDindex = Convert.ToInt32(Thread.CurrentThread.Name);
-            String confirmation = "Not Confirmed";
-            if (cbuf[IDindex - 1] != null)
-            {
-                confirmation = cbuf[IDindex - 1];
-            }
-            return confirmation;
-        }
+        public string receiver { get; set; }
+        public string value { get; set; }
     }
 
     public class TravelAgency
@@ -267,7 +233,7 @@ namespace HotelBookingSystem
             for (Int32 i = 0; i < 10; i++)
             {
                 Thread.Sleep(1000);
-                string confirmation = ConfirmBuffer.hotel2agency.getConfirmation();
+                string confirmation = MultiCellBuffer.hotel2agency.getCell(Name);
                 if(confirmation != MultiCellBuffer.COME_BACK_LATER)
                 {
                     Console.WriteLine(confirmation);
@@ -310,7 +276,7 @@ namespace HotelBookingSystem
             //Sends this orderObject to be encoded
             encodedString = Coder.Encode(purchaseOrder);
 
-            MultiCellBuffer.agency2hotel.setCell(encodedString);
+            MultiCellBuffer.agency2hotel.setCell(hotelName, encodedString);
         }
 
        /// <summary>
@@ -405,25 +371,30 @@ namespace HotelBookingSystem
     // can't just read for hotel, but if hotel finds one, it can erase
     public class MultiCellBuffer
     {
-        public static MultiCellBuffer agency2hotel = new MultiCellBuffer();
+        public static MultiCellBuffer agency2hotel = new MultiCellBuffer(3);
+        public static MultiCellBuffer hotel2agency = new MultiCellBuffer(5);
 
         public const string COME_BACK_LATER = "cbl";
+
+        private BufferCell[] cell;
         private Int32 cellsInUse = 0;
         private Semaphore _pool;
         private ReaderWriterLock rwLock;
+        private int cellCount;
 
-        private MultiCellBuffer()
+        private MultiCellBuffer(int cellCount)
         {
-            cell = new string[3];
-            _pool = new Semaphore(3, 3);
+            this.cellCount = cellCount;
+            cell = new BufferCell[cellCount];
+            _pool = new Semaphore(cellCount, cellCount);
             rwLock = new ReaderWriterLock();
         }
 
-        public bool checkFull() { return (cellsInUse >= 3); } // true if there's no free cell
+        public bool checkFull() { return (cellsInUse >= cellCount); } // true if there's no free cell
         public bool checkEmpty() { return (cellsInUse == 0); } // true if there's nothin there
 
         // Hotel checking the orders
-        public string getCell(string name)
+        public string getCell(string receiver)
         {
             string ret = COME_BACK_LATER;  // come back later
             rwLock.AcquireReaderLock(100);
@@ -433,23 +404,26 @@ namespace HotelBookingSystem
                 if (checkEmpty()) { } // if it's empty, try again in a bit
                 else
                 {
-                    for (int i = 0; i < 3; ++i)
+                    for (int i = 0; i < cellCount; ++i)
                     {
-                        string toChk = cell[i].Split(',')[0];
-                        if (String.Compare(name, toChk) == 0)
+                        if (cell[i] != null)
                         {
-                            string tmp = cell[i];
-                            cell[i] = "";
-                            --cellsInUse;
-                            ret = tmp;
+                            string toChk = cell[i].receiver;
+                            if (String.Compare(receiver, toChk) == 0)
+                            {
+                                string tmp = cell[i].value;
+                                cell[i] = null;
+                                --cellsInUse;
+                                ret = tmp;
+                            }
                         }
                     }
                 }
             }
             finally
             {
-                if (cellsInUse > 3)
-                    cellsInUse = 3;
+                if (cellsInUse > cellCount)
+                    cellsInUse = cellCount;
                 else if (cellsInUse < 0)
                     cellsInUse = 0;
 
@@ -460,7 +434,7 @@ namespace HotelBookingSystem
         }
 
         // Travel agent posting orders
-        public int setCell(string order)
+        public int setCell(string receiver, string order)
         {
             _pool.WaitOne();
             // wait forever until other threads are done with their work 
@@ -473,12 +447,12 @@ namespace HotelBookingSystem
                     return 0;  // if it's full
 
                 ++cellsInUse;
-                cell[cellsInUse - 1] = order;
+                cell[cellsInUse - 1] = new BufferCell(receiver, order);
             }
             finally
             {
-                if (cellsInUse > 3)
-                    cellsInUse = 3;
+                if (cellsInUse > cellCount)
+                    cellsInUse = cellCount;
                 else if (cellsInUse < 0)
                     cellsInUse = 0;
 
