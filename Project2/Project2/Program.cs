@@ -187,7 +187,7 @@ namespace HotelBookingSystem
                 Thread.Sleep(2000);
 
                 // Has to take in some sort of variable SH
-                Int32 newRoomPrice = pricingModel(); // "the function must take the amount of orders as input"
+                Int32 newRoomPrice = pricingModel(); // TODO: "the function must take the amount of orders as input"
                 Console.WriteLine("[Hotel {0}] New room price is ${1}", Name, newRoomPrice);
                 changePrice(newRoomPrice);
                 receiveOrder();
