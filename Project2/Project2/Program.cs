@@ -483,18 +483,12 @@ namespace HotelBookingSystem
 
         private double[] accountAmount;
         private int[] cardNumber;
-        private object[] lck;
         private Random cardRand = new Random();
 
         public BankService()
         {
             accountAmount = new double[MAX_CARD_ACCOUNTS] {0,0,0,0,0};
             cardNumber = new int[MAX_CARD_ACCOUNTS] {-1,-1,-1,-1,-1};
-            lck = new object[MAX_CARD_ACCOUNTS];
-            for (int i = 0; i < MAX_CARD_ACCOUNTS; i++)
-            {
-                lck[i] = new object();
-            }
         }
 
         /// <summary>Charge the given credit card the amount given.</summary>
@@ -505,23 +499,23 @@ namespace HotelBookingSystem
         /// <returns>"valid" or "not valid"</returns>
         public string chargeAccount(string cardNo, double amount) // card is encrypted
         {
-            Project2.EncryptSvc.ServiceClient client = new Project2.EncryptSvc.ServiceClient();
-            int cnum = Convert.ToInt32(client.Decrypt(cardNo));
-
-            int j = 0;
-            while (j < MAX_CARD_ACCOUNTS && (cnum != cardNumber[j]))
-                ++j;
-
             string result;
 
-            if (j >= MAX_CARD_ACCOUNTS) 
+            lock (this)
             {
-                // account not found
-                result = "not valid";
-            }
-            else
-            {
-                lock (lck[j])
+                Project2.EncryptSvc.ServiceClient client = new Project2.EncryptSvc.ServiceClient();
+                int cnum = Convert.ToInt32(client.Decrypt(cardNo));
+
+                int j = 0;
+                while (j < MAX_CARD_ACCOUNTS && (cnum != cardNumber[j]))
+                    ++j;
+
+                if (j >= MAX_CARD_ACCOUNTS)
+                {
+                    // account not found
+                    result = "not valid";
+                }
+                else
                 {
                     if (amount <= accountAmount[j])
                     {
@@ -534,29 +528,31 @@ namespace HotelBookingSystem
                         result = "not valid";
                     }
                 }
-            }
 
+            }
             return result;
         }
 
         public int cardApplication(int amount) // outs the card num
         {
-            //Console.WriteLine("Bank application");
-            int i = 0;
-            while (i < MAX_CARD_ACCOUNTS && cardNumber[i] != -1)
-                ++i;
-            if (i >= MAX_CARD_ACCOUNTS)
+            lock (this)
             {
-                // TODO: no free CC slots
-                throw new NotImplementedException();
+                int i = 0;
+                while (i < MAX_CARD_ACCOUNTS && cardNumber[i] != -1)
+                    ++i;
+                if (i >= MAX_CARD_ACCOUNTS)
+                {
+                    // TODO: no free CC slots
+                    throw new NotImplementedException();
+                }
+
+                int temp = (i + 1) * 1000 + cardRand.Next(0, 999);
+
+                cardNumber[i] = temp;
+                accountAmount[i] = amount;
+
+                return cardNumber[i];
             }
-
-            int temp = (i + 1) * 1000 + cardRand.Next(0, 999);
-
-            cardNumber[i] = temp;
-            accountAmount[i] = amount;
-
-            return cardNumber[i];
         }
 
         // just part of the required parts of bank
