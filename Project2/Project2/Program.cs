@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace HotelBookingSystem
 {
-    public delegate void priceCutEvent(Int32 price);
+    public delegate void priceCutEvent(Int32 oldPrice, Int32 newPrice);
     
    
     public class Hotel
@@ -18,14 +18,8 @@ namespace HotelBookingSystem
         private const double locCharge = 10;
 
         public event priceCutEvent promotionalEvent; //price cut event
-        private static Int32 currentRoomPrice = 200;
+        private Int32 currentRoomPrice = 200;
 
-        /// <returns>Return the current room price (subject to change without notice, terms and conditions may apply).</returns>
-        public static Int32 getPrice()
-        {
-            return currentRoomPrice;
-        }
-        
         /// <summary>
         /// Changes the price and notifies all listeners (in our case TravelAgencies).
         /// </summary>
@@ -35,7 +29,7 @@ namespace HotelBookingSystem
             {
                 if (promotionalEvent != null)
                 {
-                    promotionalEvent(currentPrice);
+                    promotionalEvent(currentRoomPrice, currentPrice);
                 }
             }
             currentRoomPrice = currentPrice;
@@ -234,7 +228,6 @@ namespace HotelBookingSystem
     public class TravelAgency
     {
         Random numberOfRooms = new Random();
-        Int32 previousPrice = 0;
         /// <summary>Entry point for TravelAgency thread.</summary>
         /// <remarks>
         /// The thread will terminate after the Hotel thread has terminated.
@@ -244,8 +237,6 @@ namespace HotelBookingSystem
             for (Int32 i = 0; i < 10; i++)
             {
                 Thread.Sleep(1000);
-                Int32 roomPrice = Hotel.getPrice();
-                previousPrice = roomPrice;
                 string confirmation = ConfirmBuffer.hotel2agency.getConfirmation();
                 if(confirmation != "Not Confirmed")
                 {
@@ -265,7 +256,7 @@ namespace HotelBookingSystem
         /// The travel agency will calculate the number of rooms to order, for example, based on the
         /// need and the difference between the previous price and the current price.
         /// </remarks>
-        public void discountRooms(Int32 p)
+        public void discountRooms(Int32 previousPrice, Int32 p)
         {
             Int32 demand = howManyRoomsToOrder(p, previousPrice);
             Int32 creditApplicationAmount = 200000;
