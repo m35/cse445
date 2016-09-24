@@ -192,13 +192,15 @@ namespace HotelBookingSystem
         public void confirm(string id, string msg)
         {
             // Stopping here for tonight SH
+           
             throw new NotImplementedException();
         }
 
-        public string getConfirmation()
+        public string getConfirmation() 
         {
             // TODO: implement
-            throw new NotImplementedException();
+            throw new NotImplementedException();  
+            
         }
     }
 
