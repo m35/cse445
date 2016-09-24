@@ -7,7 +7,7 @@ using System.Threading;
 namespace HotelBookingSystem
 {
     public delegate void priceCutEvent(string hotelName, Int32 oldPrice, Int32 newPrice);
-    
+   
    
     public class Hotel
     {
@@ -20,7 +20,7 @@ namespace HotelBookingSystem
         /// There is a counter p in the Hotel. After p (e.g., p = 20) price cuts have been made, a
         /// Hotel thread will terminate.
         /// </summary>
-        private int priceCutsUntilExit = 20;
+        private int priceCutsUntilExit = 20; 
 
         private string hotelName;
         public string Name { get { return hotelName; } }
@@ -38,11 +38,13 @@ namespace HotelBookingSystem
             if (currentPrice < currentRoomPrice)
             {
                 if (promotionalEvent != null)
-                {
+                { 
                     promotionalEvent(hotelName, currentRoomPrice, currentPrice);
                 }
                 Console.WriteLine("[Hotel {0}] {1} price cuts remaining", Name, priceCutsUntilExit);
+                
                 priceCutsUntilExit--;
+               
             }
             currentRoomPrice = currentPrice;
         }
@@ -230,6 +232,8 @@ namespace HotelBookingSystem
         private Random rng = new Random();
         private int angencyCreditCard;
 
+        Int32 rejectedConfirmations = 5;
+
         public TravelAgency(string name)
         {
             agencyName = name;
@@ -244,7 +248,8 @@ namespace HotelBookingSystem
         /// </remarks>
         public void getHotelRates()
         {
-            while (true)
+
+            while (rejectedConfirmations >= 0)
             {
                 Thread.Sleep(1000);
                 string confirmation = MultiCellBuffer.hotelSendConfirmToAgency.getCell(Name);
@@ -252,7 +257,13 @@ namespace HotelBookingSystem
                 {
                     Console.WriteLine("[Agency {0}] {1}", Name, confirmation);
                 }
-            } // TODO: exit when Hotel threads are terminated
+                else
+                {
+                    rejectedConfirmations--;
+                }
+            }
+            
+            // TODO: exit when Hotel threads are terminated
         }
 
         /// <summary>Buy the discount rooms here</summary>
@@ -342,7 +353,10 @@ namespace HotelBookingSystem
             // they will all return the same sequence of values.
             // Add a little delay between each construction so that doesn't happen.
 
-            Hotel[] hotels = new Hotel[3];
+            const Int32 NUMBER_OF_HOTELS = 3;
+            const Int32 NUMBER_OF_TRAVEL_AGENTS = 5;
+            
+            Hotel[] hotels = new Hotel[NUMBER_OF_HOTELS];
             hotels[0] = new Hotel("Hyatt");
             Thread.Sleep(100);
             hotels[1] = new Hotel("Hilton");
@@ -350,7 +364,7 @@ namespace HotelBookingSystem
             hotels[2] = new Hotel("Ramada");
             Thread.Sleep(100);
 
-            TravelAgency[] travelAgencies = new TravelAgency[5];
+            TravelAgency[] travelAgencies = new TravelAgency[NUMBER_OF_TRAVEL_AGENTS];
             travelAgencies[0] = new TravelAgency("Kruise");
             Thread.Sleep(100);
             travelAgencies[1] = new TravelAgency("Sunrunner");
@@ -388,6 +402,9 @@ namespace HotelBookingSystem
                 hotelThread.Name = String.Format("Hotel{0} {1}", i + 1, hotels[i].Name);
                 hotelThread.Start();
             }
+
+
+            
 
         }
     }
@@ -456,7 +473,8 @@ namespace HotelBookingSystem
         // Add a cell for another thread to pickup
         public void setCell(string receiver, string order)
         {
-            setCell(receiver, order, -1);
+            const Int32 TIME_TO_WAIT = 4000;
+            setCell(receiver, order, TIME_TO_WAIT);
         }
 
         // Add a cell for another thread to pickup
@@ -624,4 +642,104 @@ namespace HotelBookingSystem
         public double unitPrice { get; set; }
         public string timestamp { get; set; }
     }
+
+    /// <summary>
+    /// Handles tracking and data manipulation of promotion events 
+    /// to stop the Travel Agencies thread when no more events can occur.
+    /// </summary>
+    public class PromoEventCounter
+    {
+        
+        public static PromoEventCounter promosRemaining = new PromoEventCounter();
+        private int[] promoCounter = {20, 20, 20};
+        private string[] hotelID = {"","",""};
+
+        /// <summary>
+        /// Initialize the array to handle the number of hotels threads 
+        /// and the number of events that can occur.
+        /// </summary>
+        /// <param name="numberOfHotels"></param>
+        /// <param name="numberOfEvents"></param>
+        /*
+        public  PromoEventCounter(Int32 numberOfHotels, Int32 numberOfEvents)
+        {
+            for (int index = 0; index < numberOfHotels; index++)
+            {
+                promoCounter[index] = numberOfEvents;
+                hotelID[index] = "";
+            } 
+        }
+        */
+        /// <summary>
+        /// Check if all the promo events have be issued.
+        /// </summary>
+        /// <returns>true if remaining events exits false otherwise</returns>
+        public bool promoAvailable()
+        {
+            bool AreAnyEventsRemaining = false; //Assume no events remain
+            for(int index = 0; index < promoCounter.Length; index++)
+            {
+                if(promoCounter[index] != 0)
+                {
+                    AreAnyEventsRemaining = true; //If an event remains.
+                }
+            }
+            return AreAnyEventsRemaining;
+        }
+
+        /// <summary>
+        /// Decrements the number of events remaining for a specific hotel
+        /// </summary>
+        /// <param name="hotelName"></param>
+        public void promoOccured(string hotelName)
+        {
+            Int32 HotelIndexLocation = findHotelInTheArray(hotelName);
+            if(HotelIndexLocation == -1)
+            {
+                Console.WriteLine("Invalid Hotel Identifier");
+                Console.WriteLine(hotelName);
+            }
+            else
+            {
+                promoCounter[HotelIndexLocation]--;
+            }
+        }
+
+        /// <summary>
+        /// Finds out if the hotel is already known, if not adds to the list
+        /// </summary>
+        /// <param name="hotelName"></param>
+        /// <returns>index of hotel in the events remaining array</returns>
+        private int findHotelInTheArray(string hotelName)
+        {
+            Int32 found = -1;
+            //Check to see if hotel already exists
+            for(int index = 0; index < hotelID.Length; index++)
+            {
+                if (hotelID[index].Equals(hotelName, StringComparison.Ordinal))
+                {
+                    found = index;
+                    Console.WriteLine("----------------------------------------------------------------------------found a match");
+                }
+            }
+            //If the hotel was not in the list and room available, put in the list.
+            bool dataEntered = false;
+            Int32 dataIndex = 0;
+            if (found == -1)
+            {
+                while(dataIndex < hotelID.Length && !dataEntered)
+                {
+                    if (hotelID[dataIndex].Equals("", StringComparison.Ordinal))
+                    {
+                        hotelID[dataIndex] = String.Copy(hotelName);
+                        found = dataIndex;
+                        dataEntered = true;
+                        Console.WriteLine("------------------------------------------------------------------------------------entered a new hotel");
+                    }
+                }
+            }
+            return found;
+        }
+    }
+    
 }
