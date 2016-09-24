@@ -228,7 +228,7 @@ namespace HotelBookingSystem
         /// </remarks>
         public void getHotelRates()
         {
-            for (Int32 i = 0; i < 10; i++)
+            while (true)
             {
                 Thread.Sleep(1000);
                 string confirmation = MultiCellBuffer.hotel2agency.getCell(Name);
