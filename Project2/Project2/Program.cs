@@ -57,7 +57,7 @@ namespace HotelBookingSystem
         {
             // check if any orders are available
             string encodedOrder = MultiCellBuffer.agency2hotel.getCell(Thread.CurrentThread.Name);
-            if (encodedOrder != "cbl") // magic "check back later" string
+            if (encodedOrder != MultiCellBuffer.COME_BACK_LATER)
             {
                 OrderObject order = Coder.Decode(encodedOrder);
                 // process the received order
@@ -260,7 +260,7 @@ namespace HotelBookingSystem
             {
                 Thread.Sleep(1000);
                 string confirmation = ConfirmBuffer.hotel2agency.getConfirmation();
-                if(confirmation != "Not Confirmed")
+                if(confirmation != MultiCellBuffer.COME_BACK_LATER)
                 {
                     Console.WriteLine(confirmation);
                 }
@@ -397,7 +397,7 @@ namespace HotelBookingSystem
     {
         public static MultiCellBuffer agency2hotel = new MultiCellBuffer();
 
-        private string[] cell;
+        public const string COME_BACK_LATER = "cbl";
         private Int32 cellsInUse = 0;
         private Semaphore _pool;
         private ReaderWriterLock rwLock;
@@ -415,7 +415,7 @@ namespace HotelBookingSystem
         // Hotel checking the orders
         public string getCell(string name)
         {
-            string ret = "cbl";  // come back later
+            string ret = COME_BACK_LATER;  // come back later
             rwLock.AcquireReaderLock(100);
             try
             {
