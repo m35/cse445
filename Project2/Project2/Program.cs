@@ -92,12 +92,16 @@ namespace HotelBookingSystem
         /// </remarks>
         private void orderProcessing(OrderObject obj)
         {
-            string validation, result;
+            string validation, msg;
             double toCharge = (obj.unitPrice * Convert.ToDouble(obj.amount)) * (1.0 + tax) + locCharge;
 
+            DateTime now = DateTime.Now;
+            string nowString = now.ToShortDateString() + " " + now.ToShortTimeString();
+
             validation = BankService.centralBank.chargeAccount(encryptCC(obj.cardNo), toCharge);
-            result = "Order for Agency " + obj.senderID + " started at " + obj.timestamp + ", completed " + DateTime.Now;
-            ConfirmBuffer.hotel2agency.confirm(obj.senderID, result);
+            msg = String.Format("Order for agency {1} started at {2}, {3} at {4}",
+                                 obj.senderID, obj.timestamp, validation, nowString);
+            ConfirmBuffer.hotel2agency.confirm(obj.senderID, msg);
         }
 
         /// <summary>
@@ -296,6 +300,9 @@ namespace HotelBookingSystem
 
             //Applying for the new card as soon rooms are a good price.
             purchaseOrder.cardNo = BankService.centralBank.cardApplication(creditApplicationAmount);
+
+            DateTime now = DateTime.Now;
+            purchaseOrder.timestamp = now.ToShortDateString() + " " + now.ToShortTimeString();
 
             //Sends this orderObject to be encoded
             encodedString = Coder.Encode(purchaseOrder);
@@ -607,7 +614,7 @@ namespace HotelBookingSystem
             obj.senderID = words[2];
             obj.amount = Convert.ToInt32(words[3]);
             obj.unitPrice = Convert.ToDouble(words[4]);
-            obj.timestamp = Convert.ToInt32(words[5]);
+            obj.timestamp = words[5];
 
             return obj;
         }
@@ -620,6 +627,6 @@ namespace HotelBookingSystem
         public string receiverID { get; set; }
         public int amount { get; set; }
         public double unitPrice { get; set; }
-        public int timestamp { get; set; }
+        public string timestamp { get; set; }
     }
 }
