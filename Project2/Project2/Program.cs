@@ -375,9 +375,6 @@ namespace HotelBookingSystem
     }
 
 
-    // Multi String Buffer
-    //      Fix it if you know it!
-
     // Need semaphore/write/read for travel agent access
     // can't just read for hotel, but if hotel finds one, it can erase
     public class MultiCellBuffer
@@ -390,7 +387,6 @@ namespace HotelBookingSystem
         private BufferCell[] cell;
         private Int32 cellsInUse = 0;
         private Semaphore _pool;
-        private ReaderWriterLock rwLock;
         private int cellCount;
 
         private MultiCellBuffer(int cellCount)
@@ -398,7 +394,6 @@ namespace HotelBookingSystem
             this.cellCount = cellCount;
             cell = new BufferCell[cellCount];
             _pool = new Semaphore(cellCount, cellCount);
-            rwLock = new ReaderWriterLock();
         }
 
         public bool checkFull() { return (cellsInUse >= cellCount); } // true if there's no free cell
@@ -407,14 +402,16 @@ namespace HotelBookingSystem
         // Hotel checking the orders
         public string getCell(string receiver)
         {
-            string ret = COME_BACK_LATER;  // come back later
-            rwLock.AcquireReaderLock(100);
-            try
+            // start by assuming we don't find anything
+            string ret = COME_BACK_LATER;
+
+            // lock to do our work
+            lock (this)
             {
-                // Check each cell for price
-                if (checkEmpty()) { } // if it's empty, try again in a bit
-                else
+                // continue only if something is in the buffer
+                if (!checkEmpty())
                 {
+                    // Look for the receiver among the cells
                     for (int i = 0; i < cellCount; ++i)
                     {
                         if (cell[i] != null)
@@ -422,55 +419,42 @@ namespace HotelBookingSystem
                             string toChk = cell[i].receiver;
                             if (String.Compare(receiver, toChk) == 0)
                             {
+                                // found 
                                 string tmp = cell[i].value;
                                 cell[i] = null;
                                 --cellsInUse;
                                 ret = tmp;
+                                _pool.Release();
+                                break;
                             }
                         }
                     }
                 }
             }
-            finally
-            {
-                if (cellsInUse > cellCount)
-                    cellsInUse = cellCount;
-                else if (cellsInUse < 0)
-                    cellsInUse = 0;
-
-                rwLock.ReleaseReaderLock();
-            }
 
             return ret;
         }
 
-        // Travel agent posting orders
-        public int setCell(string receiver, string order)
+        // Add a cell for another thread to pickup
+        public void setCell(string receiver, string order)
         {
+            // wait forever until a cell is free
             _pool.WaitOne();
             // wait forever until other threads are done with their work 
             // (should never deadlock unless another thread never leaves)
-            rwLock.AcquireWriterLock(Timeout.Infinite);
-            try
+            lock(this)
             {
-                // Check each cell for price
-                if (checkFull())
-                    return 0;  // if it's full
-
+                // guaranteed a cell is free, just gotta find it
+                for (int i = 0; i < cellCount; i++)
+                {
+                    if (cell[i] == null)
+                    {
+                        cell[i] = new BufferCell(receiver, order);
+                        break;
+                    }
+                }
                 ++cellsInUse;
-                cell[cellsInUse - 1] = new BufferCell(receiver, order);
             }
-            finally
-            {
-                if (cellsInUse > cellCount)
-                    cellsInUse = cellCount;
-                else if (cellsInUse < 0)
-                    cellsInUse = 0;
-
-                rwLock.ReleaseWriterLock();
-                _pool.Release();
-            }
-            return 1;
         }
     }
 
