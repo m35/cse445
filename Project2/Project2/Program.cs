@@ -53,7 +53,7 @@ namespace HotelBookingSystem
         public void receiveOrder()
         {
             // check if any orders are available
-            string encodedOrder = MultiCellBuffer.agency2hotel.getCell(Name);
+            string encodedOrder = MultiCellBuffer.agencySendOrderToHotel.getCell(Name);
             if (encodedOrder != MultiCellBuffer.COME_BACK_LATER)
             {
                 OrderObject order = Coder.Decode(encodedOrder);
@@ -193,7 +193,7 @@ namespace HotelBookingSystem
             validation = BankService.centralBank.chargeAccount(encryptCC(obj.cardNo), toCharge);
             msg = String.Format("Order for hotel {0} by agency {1} started at {2}, is {3} at {4}",
                                 obj.receiverID, obj.senderID, obj.timestamp, validation, nowString);
-            MultiCellBuffer.hotel2agency.setCell(obj.senderID, msg);
+            MultiCellBuffer.hotelSendConfirmToAgency.setCell(obj.senderID, msg);
         }
 
         /// <summary>
@@ -247,7 +247,7 @@ namespace HotelBookingSystem
             while (true)
             {
                 Thread.Sleep(1000);
-                string confirmation = MultiCellBuffer.hotel2agency.getCell(Name);
+                string confirmation = MultiCellBuffer.hotelSendConfirmToAgency.getCell(Name);
                 if(confirmation != MultiCellBuffer.COME_BACK_LATER)
                 {
                     Console.WriteLine("[Agency {0}] {1}", Name, confirmation);
@@ -291,7 +291,7 @@ namespace HotelBookingSystem
             Console.WriteLine("[Agency {0}] Places an order with hotel {1} for {2} rooms at {3}",
                                 Name, hotelName, purchaseOrder.amount, purchaseOrder.timestamp);
 
-            MultiCellBuffer.agency2hotel.setCell(hotelName, encodedString);
+                MultiCellBuffer.agencySendOrderToHotel.setCell(hotelName, encodedString);
         }
 
        /// <summary>
@@ -394,8 +394,8 @@ namespace HotelBookingSystem
     // can't just read for hotel, but if hotel finds one, it can erase
     public class MultiCellBuffer
     {
-        public static MultiCellBuffer agency2hotel = new MultiCellBuffer(3);
-        public static MultiCellBuffer hotel2agency = new MultiCellBuffer(5);
+        public static MultiCellBuffer agencySendOrderToHotel = new MultiCellBuffer(3);
+        public static MultiCellBuffer hotelSendConfirmToAgency = new MultiCellBuffer(5);
 
         public const string COME_BACK_LATER = "cbl";
 
