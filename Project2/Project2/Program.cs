@@ -47,6 +47,7 @@ namespace HotelBookingSystem
                 priceCutsUntilExit--;
                
             }
+            
             currentRoomPrice = currentPrice;
         }
 
@@ -60,6 +61,7 @@ namespace HotelBookingSystem
             if (encodedOrder != MultiCellBuffer.COME_BACK_LATER)
             {
                 OrderObject order = Coder.Decode(encodedOrder);
+                ++orderCount;
                 // process the received order
                 new OrderProcessing(order);
             }
@@ -127,7 +129,7 @@ namespace HotelBookingSystem
                 newRoomPrice = rng.Next(50, 500);
             }
 
-            newRoomPrice += Convert.ToInt32(orderCount * 0.5); // surcharge for every order filled between pricecuts
+            newRoomPrice += Convert.ToInt32(orderCount * 1.5); // surcharge for every order filled between pricecuts
             return newRoomPrice;
         }
 
