@@ -12,7 +12,7 @@ namespace TestProject
         {
             Project3.Service1 sv = new Project3.Service1();
             decimal i = sv.AnnualAverageSunshineIndex(40, -105);
-            Assert.AreEqual(6.06, i);
+            Assert.AreEqual(6.06m, i);
 
         }
         //[TestMethod]

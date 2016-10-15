@@ -26,9 +26,31 @@ namespace Project3
 
     public class SolarOutput
     {
-        public object avg_dni { get; set; }
-        public object avg_ghi { get; set; }
-        public object avg_lat_tilt { get; set; }
+        public SolarOutputFields avg_dni { get; set; }
+        public SolarOutputFields avg_ghi { get; set; }
+        public SolarOutputFields avg_lat_tilt { get; set; }
+    }
+
+    public class SolarOutputFields
+    {
+        public decimal annual { get; set; }
+        public SolarMonthly monthly { get; set; }
+    }
+
+    public class SolarMonthly
+    {
+        public decimal jan { get; set; }
+        public decimal feb { get; set; }
+        public decimal mar { get; set; }
+        public decimal apr { get; set; }
+        public decimal may { get; set; }
+        public decimal jun { get; set; }
+        public decimal jul { get; set; }
+        public decimal aug { get; set; }
+        public decimal sep { get; set; }
+        public decimal oct { get; set; }
+        public decimal nov { get; set; }
+        public decimal dec { get; set; }
     }
 
     // NOTE: You can use the "Rename" command on the "Refactor" menu to change the class name "Service1" in code, svc and config file together.
@@ -56,22 +78,17 @@ namespace Project3
                 using (HttpResponseMessage client = await http.GetAsync(new Uri(url)))
                 {
                     string resultJson = await client.Content.ReadAsStringAsync();
-                    JavaScriptSerializer serializer = new JavaScriptSerializer();
-                    SolarResponse response = serializer.Deserialize<SolarResponse>(resultJson);
+                    try
+                    {
+                        JavaScriptSerializer serializer = new JavaScriptSerializer();
+                        SolarResponse response = serializer.Deserialize<SolarResponse>(resultJson);
 
-                    if (response.outputs == null)
+                        return response.outputs.avg_dni.annual;
+                    }
+                    catch (Exception ex)
+                    {
                         return -1;
-
-                    Dictionary<string, object> direct = response.outputs.avg_dni as Dictionary<string, object>;
-                    if (direct == null)
-                        return -1;
-
-                    object annual = direct["annual"];
-                    if (!(annual is decimal))
-                        return -1;
-
-                    decimal annualNumber = (decimal)annual;
-                    return annualNumber;
+                    }
                 }
             }
 
