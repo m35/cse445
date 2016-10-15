@@ -7,8 +7,10 @@ using System.ServiceModel.Web;
 using System.Text;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Web;
 using System.Web.Script.Serialization;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace Project3
 {
@@ -79,7 +81,20 @@ namespace Project3
 
         public string WordFilter(string text)
         {
-            return "";
+            bool isML = text.Contains("<html") || text.Contains("<?xml");
+            string r3;
+            if (isML)
+            {
+                string r1 = Regex.Replace(text, "(<script.+</script>)|(<style.+</style>)|(<!--.*-->)", " ");
+                string r2 = Regex.Replace(r1, "<[^>]+>", " ");
+                r3 = HttpUtility.HtmlDecode(r2);
+            }else
+            {
+                r3 = text;
+            }
+            string r4 = Regex.Replace(r3, @"\b(a|an|be|are|was|is|are|am|it|its|it's|do|did|has|had|or|and|as|like|at|to|in|out|on|off|of|the)\b", "", RegexOptions.IgnoreCase);
+            string r5 = Regex.Replace(r4, @"\s\s+", " ");
+            return r5.Trim();
         }
 
         public string[] EcoFriendlySoftware(int count)
