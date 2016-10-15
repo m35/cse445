@@ -8,7 +8,6 @@ using System.Text;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Web.Script.Serialization;
-using System.Runtime.Serialization.Json;
 using System.Threading.Tasks;
 
 namespace Project3
@@ -18,37 +17,16 @@ namespace Project3
         public string version { get; set; }
         public string[] errors { get; set; }
         public string[] warnings { get; set; }
-        public Dictionary<string, string> metadata { get; set; }
+        public Dictionary<string, object> metadata { get; set; }
+        public Dictionary<string, object> inputs { get; set; }
         public SolarOutput outputs { get; set; }
     }
 
     public class SolarOutput
     {
-        public SolarOutputFields avg_dni { get; set; }
-        public SolarOutputFields avg_ghi { get; set; }
-        public SolarOutputFields avg_lat_tilt { get; set; }
-    }
-
-    public class SolarOutputFields
-    {
-        public decimal annual { get; set; }
-        public SolarMonthly monthly { get; set; }
-    }
-
-    public class SolarMonthly
-    {
-        public decimal jan { get; set; }
-        public decimal feb { get; set; }
-        public decimal mar { get; set; }
-        public decimal apr { get; set; }
-        public decimal may { get; set; }
-        public decimal jun { get; set; }
-        public decimal jul { get; set; }
-        public decimal aug { get; set; }
-        public decimal sep { get; set; }
-        public decimal oct { get; set; }
-        public decimal nov { get; set; }
-        public decimal dec { get; set; }
+        public object avg_dni { get; set; }
+        public object avg_ghi { get; set; }
+        public object avg_lat_tilt { get; set; }
     }
 
     // NOTE: You can use the "Rename" command on the "Refactor" menu to change the class name "Service1" in code, svc and config file together.
@@ -65,7 +43,7 @@ namespace Project3
         private async Task<decimal> AnnualAverageSunshineIndexAsync(decimal lat, decimal lon)
         {
             const string URL_FORMAT = "https://developer.nrel.gov/api/solar/solar_resource/v1.json?api_key={0}&lat={1}&lon={2}";
-            const string API_KEY = "";
+            const string API_KEY = "OUbP3a7RftShy3Xrk0PBXgtKW3RH8OlUkxA4Ydvg";
 
             string latString = lat.ToString("0.000");
             string lonString = lon.ToString("0.000");
@@ -78,9 +56,23 @@ namespace Project3
                     string resultJson = await client.Content.ReadAsStringAsync();
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
                     SolarResponse response = serializer.Deserialize<SolarResponse>(resultJson);
-                    return response.outputs.avg_dni.annual;
+
+                    if (response.outputs == null)
+                        return -1;
+
+                    Dictionary<string, object> direct = response.outputs.avg_dni as Dictionary<string, object>;
+                    if (direct == null)
+                        return -1;
+
+                    object annual = direct["annual"];
+                    if (!(annual is decimal))
+                        return -1;
+
+                    decimal annualNumber = (decimal)annual;
+                    return annualNumber;
                 }
             }
+
 
         }
 
