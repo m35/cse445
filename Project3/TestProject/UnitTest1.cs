@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace TestProject
@@ -6,7 +7,7 @@ namespace TestProject
     [TestClass]
     public class UnitTest1
     {
-        [TestMethod]
+        //[TestMethod]
         public void TestSunshineHasData()
         {
             Project3.Service1 sv = new Project3.Service1();
@@ -14,7 +15,7 @@ namespace TestProject
             Assert.AreEqual(6.06, i);
 
         }
-        [TestMethod]
+        //[TestMethod]
         public void TestSunshineNoData()
         {
             Project3.Service1 sv = new Project3.Service1();
@@ -27,11 +28,25 @@ namespace TestProject
         public void TestWords()
         {
             Project3.Service1 sv = new Project3.Service1();
-            Assert.AreEqual("&", sv.WordFilter("<html><head></head><body>&amp;</body></html>"));
+            Assert.AreEqual("&<", sv.WordFilter("<html><head></head><body>&amp;&lt;</body></html>"));
             Assert.AreEqual("", sv.WordFilter("<html><head></head><body>is</body></html>"));
             Assert.AreEqual("isare", sv.WordFilter("<html><head></head><body>isare</body></html>"));
             Assert.AreEqual("", sv.WordFilter("<html><head></head><script>isare</script></html>"));
+            Assert.AreEqual("", sv.WordFilter("<html><head></head><!--test--></html>"));
+            Assert.AreEqual("test2", sv.WordFilter("<html><head></head><style>test1</style>test2</html>"));
+            Assert.AreEqual("fish taco", sv.WordFilter("<html><head></head><p>fish</p><div>taco</div></html>"));
+            Assert.AreEqual("one < 2", sv.WordFilter("one is < 2"));
         }
 
+        [TestMethod]
+        public void TestHtml()
+        {
+            Project3.Service1 sv = new Project3.Service1();
+            string text = File.ReadAllText(@"..\..\full.htm", System.Text.Encoding.UTF8);
+            string actual = sv.WordFilter(text);
+            File.WriteAllText("actual.txt", actual);
+            string expected= File.ReadAllText(@"..\..\fullresult.txt", System.Text.Encoding.UTF8);
+            Assert.AreEqual(expected, actual);
+        }
     }
 }

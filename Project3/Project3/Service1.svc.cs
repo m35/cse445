@@ -82,19 +82,21 @@ namespace Project3
         public string WordFilter(string text)
         {
             bool isML = text.Contains("<html") || text.Contains("<?xml");
-            string r3;
+            string r5;
             if (isML)
             {
-                string r1 = Regex.Replace(text, "(<script.+</script>)|(<style.+</style>)|(<!--.*-->)", " ");
-                string r2 = Regex.Replace(r1, "<[^>]+>", " ");
-                r3 = HttpUtility.HtmlDecode(r2);
+                string r1 = Regex.Replace(text, "<script.+?</script>", " ", RegexOptions.Singleline);
+                string r2 = Regex.Replace(r1, "<style.+?</style>", " ", RegexOptions.Singleline);
+                string r3 = Regex.Replace(r2, "<!--.*?-->", " ", RegexOptions.Singleline);
+                string r4 = Regex.Replace(r3, "<[^>]+>", " ", RegexOptions.Singleline);
+                r5 = HttpUtility.HtmlDecode(r4);
             }else
             {
-                r3 = text;
+                r5 = text;
             }
-            string r4 = Regex.Replace(r3, @"\b(a|an|be|are|was|is|are|am|it|its|it's|do|did|has|had|or|and|as|like|at|to|in|out|on|off|of|the)\b", "", RegexOptions.IgnoreCase);
-            string r5 = Regex.Replace(r4, @"\s\s+", " ");
-            return r5.Trim();
+            string r6 = Regex.Replace(r5, @"\b(a|an|be|are|was|is|are|am|it|its|it's|do|did|has|had|or|and|but|as|like|at|to|in|out|on|off|this|that|of|for|the)\b", "", RegexOptions.IgnoreCase);
+            string r7 = Regex.Replace(r6, @"\s\s+", " ");
+            return r7.Trim();
         }
 
         public string[] EcoFriendlySoftware(int count)
