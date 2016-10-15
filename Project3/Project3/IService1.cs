@@ -12,36 +12,18 @@ namespace Project3
     [ServiceContract]
     public interface IService1
     {
+        [OperationContract]
+        decimal AnnualAverageSunshineIndex(decimal lat, decimal lon);
 
         [OperationContract]
-        string GetData(int value);
+        string WordFilter(string text);
 
         [OperationContract]
-        CompositeType GetDataUsingDataContract(CompositeType composite);
+        string[] EcoFriendlySoftware(int count);
 
-        // TODO: Add your service operations here
+        [OperationContract]
+        string[] EcoFriendlyProducts(int count);
     }
 
 
-    // Use a data contract as illustrated in the sample below to add composite types to service operations.
-    [DataContract]
-    public class CompositeType
-    {
-        bool boolValue = true;
-        string stringValue = "Hello ";
-
-        [DataMember]
-        public bool BoolValue
-        {
-            get { return boolValue; }
-            set { boolValue = value; }
-        }
-
-        [DataMember]
-        public string StringValue
-        {
-            get { return stringValue; }
-            set { stringValue = value; }
-        }
-    }
 }
