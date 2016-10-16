@@ -20,6 +20,9 @@ namespace Project3
         /// A service that returns the annual average sunshine index of a given position (latitude,
         /// longitude). This service can be used for deciding if installing solar energy device is
         /// effective at the location.
+        /// 
+        /// Data is retrieved from the National Renewable Energy Laboratory (NREL)
+        /// https://developer.nrel.gov/docs/solar/solar-resource-v1/
         /// </remarks>
         /// <param name="latitude">-90 to 90</param>
         /// <param name="longitude">-180 to 180</param>
