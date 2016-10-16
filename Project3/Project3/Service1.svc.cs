@@ -18,13 +18,13 @@ namespace Project3
     // NOTE: In order to launch WCF Test Client for testing this service, please select Service1.svc or Service1.svc.cs at the Solution Explorer and start debugging.
     public class Service1 : IService1
     {
-        public decimal AnnualAverageSunshineIndex(decimal lat, decimal lon)
+        public decimal SolarIntensity(decimal latitude, decimal longitude)
         {
             const string URL_FORMAT = "https://developer.nrel.gov/api/solar/solar_resource/v1.json?api_key={0}&lat={1}&lon={2}";
             const string API_KEY = "OUbP3a7RftShy3Xrk0PBXgtKW3RH8OlUkxA4Ydvg";
 
-            string latString = lat.ToString("0.000");
-            string lonString = lon.ToString("0.000");
+            string latString = latitude.ToString("0.000");
+            string lonString = longitude.ToString("0.000");
 
             try
             {
@@ -37,17 +37,6 @@ namespace Project3
             }
         }
 
-        /// <summary>
-        /// Filter tags and function words out of a string.
-        /// </summary>
-        /// <remarks>
-        /// Analyze a string of words and filter out the function words (stop words) such as "a",
-        /// "an", "in", "on", "the", "is", "are", "am", as well as the element tag names and
-        /// attribute names quoted in angle brackets &lt;...&gt;, if the string represents an XML
-        /// page or HTML source page.
-        /// </remarks>
-        /// <param name="text">A string</param>
-        /// <returns>A string with the stop words removed</returns>
         public string WordFilter(string text)
         {
             bool isML = text.Contains("<html") || text.Contains("<?xml");

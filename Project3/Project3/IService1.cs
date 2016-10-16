@@ -12,9 +12,30 @@ namespace Project3
     [ServiceContract]
     public interface IService1
     {
-        [OperationContract]
-        decimal AnnualAverageSunshineIndex(decimal lat, decimal lon);
 
+        /// <summary>
+        /// Get solar intensity as a geo-location.
+        /// </summary>
+        /// <remarks>
+        /// A service that returns the annual average sunshine index of a given position (latitude,
+        /// longitude). This service can be used for deciding if installing solar energy device is
+        /// effective at the location.
+        /// </remarks>
+        /// <returns>A number reflecting the annual average solar intensity at the location</returns>
+        [OperationContract]
+        decimal SolarIntensity(decimal latitude, decimal longitude);
+
+        /// <summary>
+        /// Filter tags and function words out of a string.
+        /// </summary>
+        /// <remarks>
+        /// Analyze a string of words and filter out the function words (stop words) such as "a",
+        /// "an", "in", "on", "the", "is", "are", "am", as well as the element tag names and
+        /// attribute names quoted in angle brackets &lt;...&gt;, if the string represents an XML
+        /// page or HTML source page.
+        /// </remarks>
+        /// <param name="text">A string</param>
+        /// <returns>A string with the stop words removed</returns>
         [OperationContract]
         string WordFilter(string text);
 

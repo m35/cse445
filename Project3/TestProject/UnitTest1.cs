@@ -11,7 +11,7 @@ namespace TestProject
         public void TestSunshineHasData()
         {
             Project3.Service1 sv = new Project3.Service1();
-            decimal i = sv.AnnualAverageSunshineIndex(40, -105);
+            decimal i = sv.SolarIntensity(40, -105);
             Assert.AreEqual(6.06m, i);
 
         }
@@ -19,7 +19,7 @@ namespace TestProject
         public void TestSunshineNoData()
         {
             Project3.Service1 sv = new Project3.Service1();
-            decimal i = sv.AnnualAverageSunshineIndex(40, 50);
+            decimal i = sv.SolarIntensity(40, 50);
             Assert.AreEqual(-1, i);
 
         }
