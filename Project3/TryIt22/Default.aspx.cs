@@ -21,7 +21,8 @@ namespace TryIt22
                 decimal lat = decimal.Parse(txtLat.Text);
                 decimal lon = decimal.Parse(txtLon.Text);
 
-                decimal solarIndex = -1;
+                Proj3Services.Service1Client srv = new Proj3Services.Service1Client();
+                decimal solarIndex = srv.SolarIntensity(lat, lon);
 
                 if (solarIndex == -1)
                 {
@@ -42,7 +43,8 @@ namespace TryIt22
         {
             string text = txtText.Text;
 
-            string filteredText = text;
+            Proj3Services.Service1Client srv = new Proj3Services.Service1Client();
+            string filteredText = srv.WordFilter(text);
 
             txtFiltered.Text = filteredText;
         }

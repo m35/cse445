@@ -1,10 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.ServiceModel;
-using System.ServiceModel.Web;
-using System.Text;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Web;
@@ -58,34 +53,6 @@ namespace Project3
             return r7.Trim();
         }
 
-        public string[] EcoFriendlySoftware(int count)
-        {
-            const string URL_FORMAT = "https://api.github.com/search/repositories?q={0}&per_page={1}";
-            const string query = "eco friendly";
-            string countString = count.ToString();
-
-            try
-            {
-                Task<GitResults> x = JsonUtil.JasonAsync<GitResults>(URL_FORMAT, query, countString);
-                GitResults res = x.Result;
-                string[] descritpions = new string[res.items.Length];
-                for (int i = 0; i < res.items.Length; i++)
-                {
-                    descritpions[i] = (string)res.items[i]["description"];
-                }
-                return descritpions;
-            }
-            catch (Exception ex)
-            {
-                return new string[0];
-            }
-
-        }
-
-        public string[] EcoFriendlyProducts(int count)
-        {
-            return new string[] { "" };
-        }
     }
 
 
@@ -110,14 +77,6 @@ namespace Project3
     {
         public decimal annual { get; set; }
         public Dictionary<string, object> monthly { get; set; }
-    }
-
-
-    public class GitResults
-    {
-        public int total_count { get; set; }
-        public bool incomplete_results { get; set; }
-        public Dictionary<string, object>[] items { get; set; }
     }
 
 

@@ -47,11 +47,6 @@ namespace Project3
         [OperationContract]
         string WordFilter(string text);
 
-        [OperationContract]
-        string[] EcoFriendlySoftware(int count);
-
-        [OperationContract]
-        string[] EcoFriendlyProducts(int count);
     }
 
 
