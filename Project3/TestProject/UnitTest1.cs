@@ -7,7 +7,7 @@ namespace TestProject
     [TestClass]
     public class UnitTest1
     {
-        //[TestMethod]
+        [TestMethod]
         public void TestSunshineHasData()
         {
             Project3.Service1 sv = new Project3.Service1();
@@ -15,7 +15,7 @@ namespace TestProject
             Assert.AreEqual(6.06m, i);
 
         }
-        //[TestMethod]
+        [TestMethod]
         public void TestSunshineNoData()
         {
             Project3.Service1 sv = new Project3.Service1();
@@ -56,5 +56,13 @@ namespace TestProject
             string[] actual = sv.EcoFriendlySoftware(5);
             Assert.AreEqual(5, actual.Length);
         }
+
+        [TestMethod]
+        public void TestAmazon()
+        {
+            Project3.Service1 sv = new Project3.Service1();
+            string[] actual = sv.EcoFriendlyProducts(5);
+        }
+
     }
 }
