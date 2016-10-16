@@ -54,7 +54,7 @@ namespace TestProject
         {
             Project3.Service1 sv = new Project3.Service1();
             string[] actual = sv.EcoFriendlySoftware(5);
-
+            Assert.AreEqual(5, actual.Length);
         }
     }
 }

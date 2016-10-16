@@ -83,14 +83,20 @@ namespace Project3
 
         public string[] EcoFriendlySoftware(int count)
         {
-            const string URL_FORMAT = "https://api.github.com/search/repositories?q={0}";
-            const string query = "fish";
+            const string URL_FORMAT = "https://api.github.com/search/repositories?q={0}&per_page={1}";
+            const string query = "eco friendly";
+            string countString = count.ToString();
 
             try
             {
-                Task<GitResults> x = JsonUtil.JasonAsync<GitResults>(URL_FORMAT, query);
+                Task<GitResults> x = JsonUtil.JasonAsync<GitResults>(URL_FORMAT, query, countString);
                 GitResults res = x.Result;
-                return new string[] { "" };
+                string[] descritpions = new string[res.items.Length];
+                for (int i = 0; i < res.items.Length; i++)
+                {
+                    descritpions[i] = (string)res.items[i]["description"];
+                }
+                return descritpions;
             }
             catch (Exception ex)
             {
@@ -111,7 +117,7 @@ namespace Project3
     {
         public int total_count { get; set; }
         public bool incomplete_results { get; set; }
-        public object[] items { get; set; }
+        public Dictionary<string, object>[] items { get; set; }
     }
 
     public class JsonUtil
