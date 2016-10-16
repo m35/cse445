@@ -43,42 +43,22 @@ namespace Project3
     {
         public decimal AnnualAverageSunshineIndex(decimal lat, decimal lon)
         {
-
-            Task<decimal> x = AnnualAverageSunshineIndexAsync(lat, lon);
-            return x.Result;
-        }
-
-        private static async Task<decimal> AnnualAverageSunshineIndexAsync(decimal lat, decimal lon)
-        {
             const string URL_FORMAT = "https://developer.nrel.gov/api/solar/solar_resource/v1.json?api_key={0}&lat={1}&lon={2}";
             const string API_KEY = "OUbP3a7RftShy3Xrk0PBXgtKW3RH8OlUkxA4Ydvg";
 
             string latString = lat.ToString("0.000");
             string lonString = lon.ToString("0.000");
-            string url = String.Format(URL_FORMAT, Uri.EscapeDataString(API_KEY), Uri.EscapeDataString(latString), Uri.EscapeDataString(lonString));
 
-            using (HttpClient http = new HttpClient())
+            try
             {
-                using (HttpResponseMessage client = await http.GetAsync(new Uri(url)))
-                {
-                    string resultJson = await client.Content.ReadAsStringAsync();
-                    try
-                    {
-                        JavaScriptSerializer serializer = new JavaScriptSerializer();
-                        SolarResponse response = serializer.Deserialize<SolarResponse>(resultJson);
-
-                        return response.outputs.avg_dni.annual;
-                    }
-                    catch (Exception ex)
-                    {
-                        return -1;
-                    }
-                }
+                Task<SolarResponse> x = JsonUtil.JasonAsync<SolarResponse>(URL_FORMAT, API_KEY, latString, lonString);
+                return x.Result.outputs.avg_dni.annual;
             }
-
-
+            catch (Exception ex)
+            {
+                return -1;
+            }
         }
-
 
         public string WordFilter(string text)
         {
@@ -112,4 +92,35 @@ namespace Project3
         }
 
     }
+
+    public class JsonUtil
+    {
+
+        public static async Task<T> JasonAsync<T>(string urlFormat, params string[] urlParams)
+        {
+            string[] escapedUrlParams = new string[urlParams.Length];
+            for (int i = 0; i < urlParams.Length; i++)
+            {
+                escapedUrlParams[i] = Uri.EscapeDataString(urlParams[i]);
+            }
+
+            string url = String.Format(urlFormat, escapedUrlParams);
+
+            using (HttpClient http = new HttpClient())
+            {
+                // Must set UserAgent or we get an error on GitHub
+                // https://gist.github.com/BellaCode/c0ba0a842bbe22c9215e
+                http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Mozilla", "5.0"));
+                using (HttpResponseMessage client = await http.GetAsync(new Uri(url)))
+                {
+                    string resultJson = await client.Content.ReadAsStringAsync();
+                    JavaScriptSerializer serializer = new JavaScriptSerializer();
+                    T response = serializer.Deserialize<T>(resultJson);
+
+                    return response;
+                }
+            }
+        }
+    }
+
 }

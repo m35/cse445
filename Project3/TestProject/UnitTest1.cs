@@ -45,7 +45,7 @@ namespace TestProject
             string text = File.ReadAllText(@"..\..\full.htm", System.Text.Encoding.UTF8);
             string actual = sv.WordFilter(text);
             File.WriteAllText("actual.txt", actual);
-            string expected= File.ReadAllText(@"..\..\fullresult.txt", System.Text.Encoding.UTF8);
+            string expected = File.ReadAllText(@"..\..\fullresult.txt", System.Text.Encoding.UTF8);
             Assert.AreEqual(expected, actual);
         }
     }
