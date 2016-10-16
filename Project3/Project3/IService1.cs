@@ -21,7 +21,10 @@ namespace Project3
         /// longitude). This service can be used for deciding if installing solar energy device is
         /// effective at the location.
         /// </remarks>
-        /// <returns>A number reflecting the annual average solar intensity at the location</returns>
+        /// <returns>
+        /// A number reflecting the annual average solar intensity at the location,
+        /// or -1 if no data exists at that location.
+        /// </returns>
         [OperationContract]
         decimal SolarIntensity(decimal latitude, decimal longitude);
 
