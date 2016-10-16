@@ -25,11 +25,11 @@ namespace TryIt22
 
                 if (solarIndex == -1)
                 {
-                    lblSolarIndex.Text = String.Format("No solar data available at {0} {1}", txtLat.Text, txtLon.Text);
+                    lblSolarIndex.Text = String.Format("No solar data available at (latitude {0}, longitude {1})", txtLat.Text, txtLon.Text);
                 }
                 else
                 {
-                    lblSolarIndex.Text = String.Format("The solar intensity index at {0} {1} is {2}", txtLat.Text, txtLon.Text, solarIndex);
+                    lblSolarIndex.Text = String.Format("The solar intensity index at (latitude {0}, longitude {1}) is {2}", txtLat.Text, txtLon.Text, solarIndex);
                 }
             }
             catch (Exception ex)

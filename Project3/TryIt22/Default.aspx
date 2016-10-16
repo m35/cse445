@@ -5,17 +5,17 @@
     <h1>Assignment 3, part 2.2 TryIt test page</h1>
     <p>Michael Sabin</p>
 
-    <h2>Service URL</h2>
-    <p>URL http://localhost/ </p>
+    <h3>Service URL</h3>
+    <p>URL <a href="http://localhost:58606/">http://localhost:58606/</a> </p>
 
-    <h2>SolarIntensity</h2>
-    <h3>Description</h3>
+    <h3>SolarIntensity</h3>
+    <h4>Description</h4>
     <p>A service that returns the annual average sunshine index of a given position (latitude, longitude). This service can be used for deciding if installing solar energy device is effective at the location.</p>
-    <h3>TryIt</h3>
-    <p>Latitude: 
+    <h4>TryIt</h4>
+    <p>Latitude (in decimal, -90 to 90): 
         <asp:TextBox ID="txtLat" runat="server"></asp:TextBox>
     </p>
-    <p>Longitude: 
+    <p>Longitude (in decimal, -180 to 180): 
         <asp:TextBox ID="txtLon" runat="server"></asp:TextBox>
     </p>
     <p><asp:Button ID="btnLookupSolar" runat="server" Text="Lookup solar intensity" OnClick="btnLookupSolar_Click" />
@@ -25,10 +25,10 @@
 
     <hr />
 
-    <h2>WordFilter</h2>
-    <h3>Description</h3>
+    <h3>WordFilter</h3>
+    <h4>Description</h4>
     <p>Analyze a string of words and filter out the function words (stop words) such as "a", "an", "in", "on", "the", "is", "are", "am", as well as the element tag names and attribute names quoted in angle brackets &lt;...&gt;, if the string represents an XML page or HTML source page.</p>
-    <h3>TryIt</h3>
+    <h4>TryIt</h4>
     <p>Text:</p>
     <asp:TextBox ID="txtText" runat="server" Rows="5" TextMode="MultiLine" Width="311px"></asp:TextBox>
     <p><asp:Button ID="btnFilter" runat="server" Text="Filter text" OnClick="btnFilter_Click" /></p>

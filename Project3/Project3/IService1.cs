@@ -21,6 +21,8 @@ namespace Project3
         /// longitude). This service can be used for deciding if installing solar energy device is
         /// effective at the location.
         /// </remarks>
+        /// <param name="latitude">-90 to 90</param>
+        /// <param name="longitude">-180 to 180</param>
         /// <returns>
         /// A number reflecting the annual average solar intensity at the location,
         /// or -1 if no data exists at that location.
