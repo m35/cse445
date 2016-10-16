@@ -83,7 +83,20 @@ namespace Project3
 
         public string[] EcoFriendlySoftware(int count)
         {
-            return new string[]{""};
+            const string URL_FORMAT = "https://api.github.com/search/repositories?q={0}";
+            const string query = "fish";
+
+            try
+            {
+                Task<GitResults> x = JsonUtil.JasonAsync<GitResults>(URL_FORMAT, query);
+                GitResults res = x.Result;
+                return new string[] { "" };
+            }
+            catch (Exception ex)
+            {
+                return new string[0];
+            }
+            
         }
 
         public string[] EcoFriendlyProducts(int count)
@@ -91,6 +104,14 @@ namespace Project3
             return new string[] { "" };
         }
 
+    }
+
+
+    public class GitResults
+    {
+        public int total_count { get; set; }
+        public bool incomplete_results { get; set; }
+        public object[] items { get; set; }
     }
 
     public class JsonUtil

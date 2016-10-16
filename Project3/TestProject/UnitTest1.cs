@@ -48,5 +48,13 @@ namespace TestProject
             string expected = File.ReadAllText(@"..\..\fullresult.txt", System.Text.Encoding.UTF8);
             Assert.AreEqual(expected, actual);
         }
+
+        [TestMethod]
+        public void TestGit()
+        {
+            Project3.Service1 sv = new Project3.Service1();
+            string[] actual = sv.EcoFriendlySoftware(5);
+
+        }
     }
 }
