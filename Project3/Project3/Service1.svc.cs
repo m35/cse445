@@ -14,29 +14,6 @@ using System.Text.RegularExpressions;
 
 namespace Project3
 {
-    public class SolarResponse
-    {
-        public string version { get; set; }
-        public string[] errors { get; set; }
-        public string[] warnings { get; set; }
-        public Dictionary<string, object> metadata { get; set; }
-        public Dictionary<string, object> inputs { get; set; }
-        public SolarOutput outputs { get; set; }
-    }
-
-    public class SolarOutput
-    {
-        public SolarOutputFields avg_dni { get; set; }
-        public SolarOutputFields avg_ghi { get; set; }
-        public SolarOutputFields avg_lat_tilt { get; set; }
-    }
-
-    public class SolarOutputFields
-    {
-        public decimal annual { get; set; }
-        public Dictionary<string, object> monthly { get; set; }
-    }
-
     // NOTE: You can use the "Rename" command on the "Refactor" menu to change the class name "Service1" in code, svc and config file together.
     // NOTE: In order to launch WCF Test Client for testing this service, please select Service1.svc or Service1.svc.cs at the Solution Explorer and start debugging.
     public class Service1 : IService1
@@ -60,6 +37,17 @@ namespace Project3
             }
         }
 
+        /// <summary>
+        /// Filter tags and function words out of a string.
+        /// </summary>
+        /// <remarks>
+        /// Analyze a string of words and filter out the function words (stop words) such as "a",
+        /// "an", "in", "on", "the", "is", "are", "am", as well as the element tag names and
+        /// attribute names quoted in angle brackets &lt;...&gt;, if the string represents an XML
+        /// page or HTML source page.
+        /// </remarks>
+        /// <param name="text">A string</param>
+        /// <returns>A string with the stop words removed</returns>
         public string WordFilter(string text)
         {
             bool isML = text.Contains("<html") || text.Contains("<?xml");
@@ -102,14 +90,37 @@ namespace Project3
             {
                 return new string[0];
             }
-            
+
         }
 
         public string[] EcoFriendlyProducts(int count)
         {
             return new string[] { "" };
         }
+    }
 
+
+    public class SolarResponse
+    {
+        public string version { get; set; }
+        public string[] errors { get; set; }
+        public string[] warnings { get; set; }
+        public Dictionary<string, object> metadata { get; set; }
+        public Dictionary<string, object> inputs { get; set; }
+        public SolarOutput outputs { get; set; }
+    }
+
+    public class SolarOutput
+    {
+        public SolarOutputFields avg_dni { get; set; }
+        public SolarOutputFields avg_ghi { get; set; }
+        public SolarOutputFields avg_lat_tilt { get; set; }
+    }
+
+    public class SolarOutputFields
+    {
+        public decimal annual { get; set; }
+        public Dictionary<string, object> monthly { get; set; }
     }
 
 
@@ -119,6 +130,7 @@ namespace Project3
         public bool incomplete_results { get; set; }
         public Dictionary<string, object>[] items { get; set; }
     }
+
 
     public class JsonUtil
     {
