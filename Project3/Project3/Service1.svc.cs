@@ -34,23 +34,7 @@ namespace Project3
     public class SolarOutputFields
     {
         public decimal annual { get; set; }
-        public SolarMonthly monthly { get; set; }
-    }
-
-    public class SolarMonthly
-    {
-        public decimal jan { get; set; }
-        public decimal feb { get; set; }
-        public decimal mar { get; set; }
-        public decimal apr { get; set; }
-        public decimal may { get; set; }
-        public decimal jun { get; set; }
-        public decimal jul { get; set; }
-        public decimal aug { get; set; }
-        public decimal sep { get; set; }
-        public decimal oct { get; set; }
-        public decimal nov { get; set; }
-        public decimal dec { get; set; }
+        public Dictionary<string, object> monthly { get; set; }
     }
 
     // NOTE: You can use the "Rename" command on the "Refactor" menu to change the class name "Service1" in code, svc and config file together.
@@ -64,7 +48,7 @@ namespace Project3
             return x.Result;
         }
 
-        private async Task<decimal> AnnualAverageSunshineIndexAsync(decimal lat, decimal lon)
+        private static async Task<decimal> AnnualAverageSunshineIndexAsync(decimal lat, decimal lon)
         {
             const string URL_FORMAT = "https://developer.nrel.gov/api/solar/solar_resource/v1.json?api_key={0}&lat={1}&lon={2}";
             const string API_KEY = "OUbP3a7RftShy3Xrk0PBXgtKW3RH8OlUkxA4Ydvg";
@@ -107,7 +91,8 @@ namespace Project3
                 string r3 = Regex.Replace(r2, "<!--.*?-->", " ", RegexOptions.Singleline);
                 string r4 = Regex.Replace(r3, "<[^>]+>", " ", RegexOptions.Singleline);
                 r5 = HttpUtility.HtmlDecode(r4);
-            }else
+            }
+            else
             {
                 r5 = text;
             }
